@@ -1,0 +1,3 @@
+defmodule Stubr do
+
+end
