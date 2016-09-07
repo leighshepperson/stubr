@@ -1,5 +1,4 @@
 defmodule Stubr do
-  alias Stubr.Errors.ModuleExistsError
   @name_generator Application.get_env(:stubr, :name_generator)
 
   def stub(module, [function]) do
@@ -10,21 +9,12 @@ defmodule Stubr do
     unique_name = @name_generator.generate()
 
     content = quote do
-      def unquote(:"#{name}")(unquote_splicing(args)) do
-        unquote(impl.(1,2,3))
-      end
+      def unquote(:"#{name}")(unquote_splicing(args)), do: unquote(impl)
     end
 
     {_, stub, _, _} = Module.create(:"Elixir.#{unique_name}", content, Macro.Env.location(__ENV__))
 
     stub
-  end
-
-  defp check_module_loaded(module) do
-    case Code.ensure_loaded(module) do
-      {:error, _} -> {:ok}
-      _ -> raise ModuleExistsError
-    end
   end
 
 end
