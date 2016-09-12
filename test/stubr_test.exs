@@ -3,8 +3,7 @@ defmodule StubrTest do
   doctest Stubr
   import Stubr
 
-  test "Can create a new module with a function that accepts fixed parameters" do
-
+  test "Can create a new module with a function accepting a single set of fixed parameters" do
     stubed = stub({:good_bye, fn(1, 4) -> :canned_response end})
 
     assert stubed.module_info[:exports][:good_bye] == 2
