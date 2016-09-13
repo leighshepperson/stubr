@@ -1,21 +1,25 @@
 defmodule Stubr do
-  @name_generator Application.get_env(:stubr, :name_generator)
-
-  defmacro stub(function_reps) do
-    content = function_reps |> create_content
-
-    stub_name = @name_generator.generate()
-
-    {_, stub, _, _} = Module.create(:"Elixir.#{stub_name}", content, Macro.Env.location(__ENV__))
-
-    stub
+  defmacro stub(functions) do
+    functions
+    |> create_body
+    |> create_module
   end
 
-  defp create_content(function_reps) do
-    function_reps = function_reps |> put_args
+  defp create_module(body) do
+    module_name = for _ <- 1..64, do: :rand.uniform(26) + 96
+    |> to_string
+    |> String.capitalize
 
-    quote bind_quoted: [function_reps: Macro.escape(function_reps)] do
-      for {name, impl, args} <- function_reps do
+    {_, module, _, _} = Module.create(:"Stubr.#{module_name}", body, Macro.Env.location(__ENV__))
+
+    module
+  end
+
+  defp create_body(functions) do
+    functions = functions |> put_args
+
+    quote bind_quoted: [functions: Macro.escape(functions)] do
+      for {name, impl, args} <- functions do
         def unquote(name)(unquote_splicing(args)) do
           unquote(impl).(unquote_splicing(args))
         end
@@ -25,8 +29,8 @@ defmodule Stubr do
 
   defp put_args({name, impl}),
     do: {name, impl, get_args(impl)}
-  defp put_args(function_reps),
-    do: function_reps |> Enum.map(&put_args(&1))
+  defp put_args(functions),
+    do: functions |> Enum.map(&put_args(&1))
 
   defp get_args({:fn, [_], [{:->, [_], [args, _]}]}),
     do: args
