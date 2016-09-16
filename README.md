@@ -26,7 +26,7 @@ stubbed = Stubr.stub(HTTPoison, [
   
 creates a new module that returns a `HTTPoison.Response` struct when it invokes the `XXX.get/1` function. You pass in `stubbed` as a parameter to functions that need to use `HTTPoison`. 
 
-For example, given this module:
+Given this module:
 
 ```
 defmodule Foo do
