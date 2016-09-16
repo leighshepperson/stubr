@@ -1,4 +1,5 @@
 defmodule StubrAgent do
+  @moduledoc false
 
   def start_link do
     Agent.start_link(fn -> [] end)

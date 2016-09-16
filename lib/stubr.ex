@@ -1,10 +1,51 @@
 defmodule Stubr do
+  @moduledoc """
+  Stub framework used to stub modules and test expectations.
 
+  The `Stubr.stub/2` function accepts a module argument and a list of function
+  representations. For example, the expression
+
+    Stubr.stub(HTTPoison, [
+      {:get, fn(url) -> {:ok, %HTTPoison.Response{status_code: 500}}}
+    ])
+
+  creates a module that returns a HTTPoison.Response struct when it invokes
+  the `XXX.get/1` function.
+
+  If the HTTPoison module does not contain the function `HTTPoison.get/1`,
+  then Stubr raises an `UndefinedFunctionError`.
+
+  The module name of the stub created by Stubr is a random string to ensure
+  it does not redefine existing modules.
+
+  Additionally, `Stubr.stub/1` creates stubs with arbitary function
+  representations.
+  """
+
+  @doc ~S"""
+  Creates a new module that stubs specified functions in the given module
+
+  ## Examples
+      iex> defmodule Foo, do: def test(1), do: :ok
+      iex> Stubr.stub(Foo, [{:test, fn(_) -> :good_bye end}]).test(1)
+      :good_bye
+
+  """
+  @spec stub(module(), [{atom(), (t::any() -> any())}]) :: module() | Error
   def stub(module, function_reps) do
-    is_defined!(module, function_reps)
+    {:ok} = is_defined!(module, function_reps)
     stub(function_reps)
   end
 
+  @doc ~S"""
+  Creates a new module for stubbing defined by provided functions
+
+  ## Examples
+      iex> Stubr.stub([{:foo, fn(1, 2, 3) -> :bar end}]).foo(1, 2, 3)
+      :bar
+
+  """
+  @spec stub([{atom(), (t::any() -> any())}]) :: module() | Error
   def stub(function_reps) do
     {:ok, pid} = StubrAgent.start_link
 
@@ -24,6 +65,8 @@ defmodule Stubr do
         raise UndefinedFunctionError
       end
     end
+
+    {:ok}
   end
 
   defp create_body(function_reps, pid) do
@@ -39,7 +82,9 @@ defmodule Stubr do
   end
 
   defp create_module(body) do
-    module_name = (for _ <- 1..32, do: :rand.uniform(26) + 96)
+    random_string = (for _ <- 1..32, do: :rand.uniform(26) + 96)
+
+    module_name = random_string
     |> to_string
     |> String.capitalize
 
