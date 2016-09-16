@@ -1,29 +1,68 @@
 defmodule Stubr do
   @moduledoc """
-  Framework used to stub modules and provide canned answers during a test.
+  In functional languages you should write pure functions. However, sometimes we
+  need functions to call external API’s. But these effect the state of the
+  system. So these functions are impure. In non-functional languages you create
+  mocks to test expectations. For example, you might create a mock of a
+  repository. And the test checks it calls the update function. You are testing
+  a side effect. This is something you should avoid in functional languages.
 
-  The `Stubr.stub/2` function accepts a module argument and a list of function
-  representations. For example, the expression
+  Instead of mocks we should use stubs. Mocking frameworks tend to treat them
+  as interchangeable. This makes it hard to tell them apart. So it is good
+  to have a simple definition. [Quoting](http://martinfowler.com/articles/mocksArentStubs.html) Martin Fowler:
 
-    Stubr.stub(HTTPoison, [
-      {:get, fn(url) -> {:ok, %HTTPoison.Response{status_code: 500}}}
-    ])
+  * Stubs provide canned answers to calls made during the test, usually not
+   responding at all to anything outside what's programmed in for the test.
+   Stubs may also record information about calls, such as an email gateway
+   stub that remembers the messages it 'sent', or maybe only how many
+   messages it 'sent'.
+  * Mocks are objects pre-programmed with expectations which form a
+   specification of the calls they are expected to receive.
 
-  creates a module that returns a HTTPoison.Response struct when it invokes
-  the `XXX.get/1` function.
+  So what does Stubr provide:
+  * Stubr is not a mock framework
+  * Stubr is not a macro
+  * Stubr provides canned answers to calls made during a test
+  * Stubr makes it easy to create stubs
+  * Stubr makes sure the module you stub HAS the function you want to stub
+  * Stubr works without an explicit module. You set it up how you want
+  * Stubr won't redefine your modules!
 
-  If the HTTPoison module does not contain the function `HTTPoison.get/1`,
-  then Stubr raises an `UndefinedFunctionError`.
+  ## Example
+  The expression
 
-  The module name of the stub created by Stubr is a random string to ensure
-  it does not redefine existing modules.
+  ```
+  stubbed = Stubr.stub(HTTPoison, [
+    {:get, fn(url) -> {:ok, %HTTPoison.Response{status_code: 500}}}
+  ])
+  ```
 
-  Additionally, `Stubr.stub/1` creates stubs with arbitary function
-  representations.
+  creates a new module that returns a `HTTPoison.Response` struct when it invokes the `XXX.get/1` function. You pass in `stubbed` as a parameter to functions that need to use `HTTPoison`.
+
+  Given this module:
+
+  ```
+  defmodule Foo do
+    def bar(http_client \\ HTTPoison) do
+      http_client.get("www.google.com")
+    end
+  end
+  ```
+
+  pass it the stubbed `HTTPoison` like this:
+
+  ```
+  Foo.bar(stubbed)
+  {:ok, %HTTPoison.Response{status_code: 500}}}
+  ```
+
   """
 
   @doc ~S"""
-  Creates a new module that stubs specified functions in the given module
+  Creates a stub using a module as a safety net. Define the functions how you like,
+  just make sure they are defined in the module you want to stub. Otherwise it will
+  throw an `UndefinedFunctionError`. Useful if you are stubbing modules from libraries
+  that could depreciate your favorite function.
 
   ## Examples
       iex> defmodule Foo, do: def test(1), do: :ok
@@ -38,7 +77,9 @@ defmodule Stubr do
   end
 
   @doc ~S"""
-  Creates a new module for stubbing defined by provided functions
+  Creates a stub. Define the functions how you like. Useful if you are building
+  an application using TDD. Stub it out first, then create the implementation when
+  you know its behaviour.
 
   ## Examples
       iex> Stubr.stub([{:foo, fn(1, 2, 3) -> :bar end}]).foo(1, 2, 3)
