@@ -1,6 +1,6 @@
 defmodule Stubr do
   @moduledoc """
-  Stub framework used to stub modules.
+  Framework used to stub modules and provide canned answers during a test.
 
   The `Stubr.stub/2` function accepts a module argument and a list of function
   representations. For example, the expression

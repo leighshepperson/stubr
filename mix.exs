@@ -5,31 +5,40 @@ defmodule Stubr.Mixfile do
     [app: :stubr,
      version: "0.1.0",
      elixir: "~> 1.3",
+     description: description(),
+     package: package(),
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
      deps: deps()]
   end
 
-  # Configuration for the OTP application
-  #
-  # Type "mix help compile.app" for more information
   def application do
     [applications: [:logger]]
   end
 
-  # Dependencies can be Hex packages:
-  #
-  #   {:mydep, "~> 0.3.0"}
-  #
-  # Or git/path repositories:
-  #
-  #   {:mydep, git: "https://github.com/elixir-lang/mydep.git", tag: "0.1.0"}
-  #
-  # Type "mix help deps" for more examples and options
   defp deps do
     [
       {:dialyxir, "~> 0.3.5", only: [:dev]},
       {:credo, "~> 0.4", only: [:dev, :test]}
     ]
   end
+
+  defp description do
+    """
+    Framework used to stub modules and provide canned answers during a test.
+    Easy to implement. It is not a Mock framework - Stubr just makes stubs!
+    """
+  end
+
+  defp package do
+    [
+      name: :stubr,
+      files: ["lib", "priv", "mix.exs", "README*", "readme*", "LICENSE*", "license*"],
+      maintainers: ["Leigh Shepperson"],
+      licenses: ["MIT"],
+      links: %{"GitHub" => "https://github.com/leighshepperson/stubr",
+               "Docs" => "https://github.com/leighshepperson/stubr"}
+    ]
+  end
+
 end
