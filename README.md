@@ -14,6 +14,7 @@ So what does Stubr provide:
 * Stubr makes it easy to create stubs
 * Stubr makes sure the module you stub HAS the function you want to stub
 * Stubr works without an explicit module. You set it up how you want
+* Stubr won't redefine your modules!
 
 ## Example
 The expression
