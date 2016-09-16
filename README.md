@@ -13,9 +13,10 @@ So what does Stubr provide:
 * Stubr provides canned answers to calls made during a test
 * Stubr makes it easy to create stubs
 * Stubr makes sure the module you stub HAS the function you want to stub
-* Stubr works without an explicit module. You can set it up how you want
+* Stubr works without an explicit module. You set it up how you want
 
-For example, the expression
+## Example
+The expression
 
 ```
 stubbed = Stubr.stub(HTTPoison, [
@@ -23,7 +24,9 @@ stubbed = Stubr.stub(HTTPoison, [
 ])
 ```
   
-creates a new module that returns a `HTTPoison.Response` struct when it invokes the `XXX.get/1` function. You pass in `stubbed` as a parameter to functions that need to use `HTTPoison`. For example, this module:
+creates a new module that returns a `HTTPoison.Response` struct when it invokes the `XXX.get/1` function. You pass in `stubbed` as a parameter to functions that need to use `HTTPoison`. 
+
+For example, given this module:
 
 ```
 defmodule Foo do
@@ -35,7 +38,7 @@ defmodule Foo do
 end
 ```
 
-is passed the stubbed `HTTPoison` like this:
+pass it the stubbed `HTTPoison` like this:
 
 ```
 iex> Foo.bar(stubbed)
