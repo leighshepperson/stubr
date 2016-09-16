@@ -1,5 +1,10 @@
 defmodule Stubr do
 
+  def stub(module, function_reps) do
+    is_defined!(module, function_reps)
+    stub(function_reps)
+  end
+
   def stub(function_reps) do
     {:ok, pid} = StubrAgent.start_link
 
@@ -9,6 +14,16 @@ defmodule Stubr do
     function_reps
     |> create_body(pid)
     |> create_module
+  end
+
+  defp is_defined!(module, function_reps) do
+    module_function_set = MapSet.new(module.module_info(:functions))
+
+    for {name, impl} <- function_reps do
+      if !MapSet.member?(module_function_set, {name, :erlang.fun_info(impl)[:arity]}) do
+        raise UndefinedFunctionError
+      end
+    end
   end
 
   defp create_body(function_reps, pid) do
