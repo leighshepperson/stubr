@@ -24,7 +24,7 @@ defmodule Stubr do
   end
 
   defp create_module(body) do
-    module_name = for _ <- 1..64, do: :rand.uniform(26) + 96
+    module_name = (for _ <- 1..32, do: :rand.uniform(26) + 96)
     |> to_string
     |> String.capitalize
 

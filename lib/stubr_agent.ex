@@ -14,16 +14,16 @@ defmodule StubrAgent do
 
     pid
     |> Agent.get(&Keyword.get_values(&1, name))
-    |> eval_functions(params)
+    |> eval_functions(params, nil)
   end
 
-  defp eval_functions([], _),
-    do: raise FunctionClauseError
-  defp eval_functions([function|functions], params) do
+  defp eval_functions([], _, error),
+    do: raise error
+  defp eval_functions([function|functions], params, _) do
     try do
       apply(function, params)
     rescue
-      _ in FunctionClauseError -> eval_functions(functions, params)
+      error -> eval_functions(functions, params, error)
     end
   end
 

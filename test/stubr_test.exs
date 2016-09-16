@@ -1,8 +1,8 @@
 defmodule StubrTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
   doctest Stubr
 
-  test "Creates a stub with a function that executes if the arguments match a pattern" do
+  test "Creates a stub with a function that matches a pattern" do
     stubbed = Stubr.stub([{:good_bye, fn(1, 4) -> :canned_response end}])
 
     assert stubbed.module_info[:exports][:good_bye] == 2
@@ -48,6 +48,40 @@ defmodule StubrTest do
 
     assert_raise FunctionClauseError, fn ->
       stubbed.good_bye(1, 1, 1)
+    end
+  end
+
+  test "If there is no function matching name, then throws an UndefinedFunctionError" do
+    stubbed = Stubr.stub([
+      {:good_bye, fn(1, 4, 9) -> :three_params end}
+    ])
+
+    assert_raise UndefinedFunctionError, fn ->
+      stubbed.bonjour(1, 4, 8)
+    end
+  end
+
+  test "Can stub a function of differing arity" do
+    stubbed = Stubr.stub([
+      {:good_bye, fn(1, 4, 9) -> :three_params end},
+      {:good_bye, fn(1, 4) -> :two_params end},
+      {:good_bye, fn(1, 4, 9, 7) -> :four_params end},
+    ])
+
+    assert stubbed.good_bye(1, 4, 9) == :three_params
+    assert stubbed.good_bye(1, 4) == :two_params
+    assert stubbed.good_bye(1, 4, 9, 7) == :four_params
+  end
+
+  test "If there is no function matching arity, then throws an UndefinedFunctionError" do
+    stubbed = Stubr.stub([
+      {:good_bye, fn(1, 4, 9) -> :three_params end},
+      {:good_bye, fn(1, 4) -> :two_params end},
+      {:good_bye, fn(1, 4, 9, 7) -> :four_params end},
+    ])
+
+    assert_raise UndefinedFunctionError, fn ->
+      stubbed.good_bye(1, 1, 1, 1, 1)
     end
   end
 
