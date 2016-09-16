@@ -9,7 +9,7 @@ defmodule StubrTest do
     assert stubbed.good_bye(1, 4) == :canned_response
   end
 
-  test "Creates a stub with a single function that matches different patterns" do
+  test "Creates a stub with a function that matches different patterns" do
     stubbed = Stubr.stub([
       {:good_bye, fn(1, 4, 9) -> :canned_response end},
       {:good_bye, fn(1, :ok, 1) -> :other_canned_response end},
@@ -51,7 +51,7 @@ defmodule StubrTest do
     end
   end
 
-  test "If there is no function matching name, then throws an UndefinedFunctionError" do
+  test "If there is no function matching a name, then throw an UndefinedFunctionError" do
     stubbed = Stubr.stub([
       {:good_bye, fn(1, 4, 9) -> :three_params end}
     ])
@@ -61,7 +61,7 @@ defmodule StubrTest do
     end
   end
 
-  test "Can stub a function of differing arity" do
+  test "Can stub an overloaded function" do
     stubbed = Stubr.stub([
       {:good_bye, fn(1, 4, 9) -> :three_params end},
       {:good_bye, fn(1, 4) -> :two_params end},
@@ -73,7 +73,7 @@ defmodule StubrTest do
     assert stubbed.good_bye(1, 4, 9, 7) == :four_params
   end
 
-  test "If there is no function matching arity, then throws an UndefinedFunctionError" do
+  test "If there is no function to overload, then throw an UndefinedFunctionError" do
     stubbed = Stubr.stub([
       {:good_bye, fn(1, 4, 9) -> :three_params end},
       {:good_bye, fn(1, 4) -> :two_params end},
@@ -94,13 +94,24 @@ defmodule StubrTest do
     assert stubbed.good_bye(1, 2, 3) == 0
   end
 
-  test "Creates a stub by passing in a function defined in another module" do
-    defmodule Test do
-      def test(1, 2), do: :ok
-    end
+  test "Creates a stub when passing in a function defined in another module" do
+    defmodule Test, do: def test(1, 2), do: :ok
 
     stubbed = Stubr.stub([{:test, &Test.test/2}])
 
     assert stubbed.test(1, 2) == :ok
+  end
+
+  test "Can stub a dependency" do
+    defmodule Dependency, do: def foo(1, 2), do: :expensive_call
+    defmodule DependencyTest do
+      def bar(dependency \\ Dependency) do
+        dependency.foo(1, 2)
+      end
+    end
+
+    stubbed = Stubr.stub([{:foo, fn(1, 2) -> :ok end}])
+
+    assert DependencyTest.bar(stubbed) == :ok
   end
 end
