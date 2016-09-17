@@ -20,6 +20,7 @@ defmodule Stubr do
    specification of the calls they are expected to receive.
 
   So what does Stubr provide:
+
   * Stubr is not a mock framework
   * Stubr is not a macro
   * Stubr provides canned answers to calls made during a test
@@ -29,33 +30,40 @@ defmodule Stubr do
   * Stubr won't redefine your modules!
 
   ## Example
-  The expression
+  Say we want to test this module in different scenarios:
 
   ```
-  stubbed = Stubr.stub(HTTPoison, [
-    {:get, fn(url) -> {:ok, %HTTPoison.Response{status_code: 500}}}
-  ])
-  ```
-
-  creates a new module that returns a `HTTPoison.Response` struct when it invokes the `XXX.get/1` function. You pass in `stubbed` as a parameter to functions that need to use `HTTPoison`.
-
-  Given this module:
-
-  ```
-  defmodule Foo do
-    def bar(http_client \\ HTTPoison) do
-      http_client.get("www.google.com")
+  defmodule WebGet do
+    def get_body_and_upcase(url, http_client \\ HTTPoison) do
+      {:ok, response} = http_client.get(url)
+      response.body |> String.upcase
     end
   end
   ```
 
-  pass it the stubbed `HTTPoison` like this:
+  Then we can use Stubr and test cases to get the http_client to provide different responses:
 
   ```
-  Foo.bar(stubbed)
-  {:ok, %HTTPoison.Response{status_code: 500}}}
+  test "It can upcase the body returned in the response" do
+    test_cases = [
+      %{url: "www.google.com", resp: {:ok, %HTTPoison.Response{body: "google"}}, expected: "GOOGLE"},
+      %{url: "www.facebook.com", resp: {:ok, %HTTPoison.Response{body: "facebook"}}, expected: "FACEBOOK"},
+      %{url: "www.microsoft.com", resp: {:ok, %HTTPoison.Response{body: "microsoft"}}, expected: "MICROSOFT"},
+    ]
+
+    functions_to_stub = test_cases
+    |> Enum.map(fn(%{url: url, resp: resp}) -> {:get, fn(^url) -> resp end} end)
+
+    # You don't even need to provide HTTPoison - it just checks to see if HTTPoison.get/1 actually exists
+    stubbed_http_client = Stubr.stub(HTTPoison, functions_to_stub)
+
+    for %{expected: expected, url: url} <- test_cases do
+      assert WebGet.get_body_and_upcase(url, stubbed_http_client) == expected
+    end
+  end
   ```
 
+  How cool was that!
   """
 
   @doc ~S"""
@@ -69,8 +77,11 @@ defmodule Stubr do
       iex> Stubr.stub(Foo, [{:test, fn(_) -> :good_bye end}]).test(1)
       :good_bye
 
+      iex> defmodule Bar, do: def test(x, y, z), do: x + y + z
+      iex> Stubr.stub(Bar, [{:test, fn(1, 2, x) -> 1 + 2 * x end}]).test(1, 2, 9)
+      19
   """
-  @spec stub(module(), [{atom(), (t::any() -> any())}]) :: module() | Error
+  @spec stub(module(), list({atom(), (... -> any())})) :: module() | Error
   def stub(module, function_reps) do
     {:ok} = is_defined!(module, function_reps)
     stub(function_reps)
@@ -85,8 +96,10 @@ defmodule Stubr do
       iex> Stubr.stub([{:foo, fn(1, 2, 3) -> :bar end}]).foo(1, 2, 3)
       :bar
 
+      iex> Stubr.stub([{:bar, fn(x, y, z, u) -> x*y*z + u end}]).bar(1, 2, 3, 4)
+      10
   """
-  @spec stub([{atom(), (t::any() -> any())}]) :: module() | Error
+  @spec stub(list({atom(), (... -> any())})) :: module() | Error
   def stub(function_reps) do
     {:ok, pid} = StubrAgent.start_link
 
