@@ -158,6 +158,12 @@ assert stubbed.gravitational_attraction(5.97e24, 1.99e30, 1.5e11) == 3.523960986
 
 To see how stubs can be used in TDD, see [https://www.infoq.com/presentations/mock-fsharp-tdd](https://www.infoq.com/presentations/mock-fsharp-tdd)
 
+## Roadmap
+
+* Metadata. Record information about calls
+* Clamp a behaviour to a stub created by Stubr
+* Auto-stub modules
+
 ## Installation
 
 Stubr is [available in Hex](https://hex.pm/packages/stubr), the package can be installed as:
