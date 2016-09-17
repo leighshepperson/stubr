@@ -2,7 +2,7 @@
 
 ![Build Status](https://travis-ci.org/leighshepperson/stubr.svg?branch=master)
 
-In functional languages you should write pure functions. However, sometimes we need functions to call external API’s. But these effect the state of the system. So these functions are impure. In non-functional languages you create mocks to test expectations. For example, you might create a mock of a repository. And the test checks it calls the update function. You are testing a side effect. This is something you should avoid in functional languages. 
+In functional languages you should write pure functions. However, sometimes we need functions to call external API’s. But these affect the state of the system. So these functions are impure. In non-functional languages you create mocks to test expectations. For example, you might create a mock of a repository. And the test checks it calls the update function. You are testing a side effect. This is something you should avoid in functional languages. 
 
 Instead of mocks we should use stubs. Mocking frameworks tend to treat them as interchangeable. This makes it hard to tell them apart. So it is good to have a simple definition. [Quoting](http://martinfowler.com/articles/mocksArentStubs.html) Martin Fowler:
 
@@ -18,6 +18,7 @@ So what does Stubr provide:
 * Stubr makes sure the module you stub HAS the function you want to stub
 * Stubr stubs as many functions and patterns as you want
 * Stubr works without an explicit module. You set it up how you want
+* Stubr lets you do asynchronous tests
 * Stubr won't redefine your modules!
 * Stubr has ZERO dependencies
 
@@ -69,7 +70,7 @@ Stubr is [available in Hex](https://hex.pm/packages/stubr), the package can be i
 
     ```elixir
     def deps do
-      [{:stubr, "~> 1.0.0"}]
+      [{:stubr, "~> 1.0.1"}]
     end
     ```
 
