@@ -22,7 +22,7 @@ defmodule Stubr do
 
     ## Example - Adapter for JSON PlaceHolder API
 
-    This simple JSONPlaceHolderAdapter was built using using TDD:
+    This is a simple JSONPlaceHolderAdapter built using TDD:
 
     ```elixir
     defmodule Post do

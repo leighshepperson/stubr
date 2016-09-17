@@ -24,7 +24,7 @@ So what does Stubr provide:
 
 ## Example - Adapter for JSON PlaceHolder API
 
-This simple JSONPlaceHolderAdapter was built using using TDD:
+This is a simple JSONPlaceHolderAdapter built using TDD:
 
 ```elixir
 defmodule Post do
