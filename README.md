@@ -18,6 +18,7 @@ So what does Stubr provide:
 * Stubr makes sure the module you stub HAS the function you want to stub
 * Stubr stubs as many functions and patterns as you want
 * Stubr works without an explicit module. You set it up how you want
+* Stubr lets you do asynchronous tests
 * Stubr won't redefine your modules!
 * Stubr has ZERO dependencies
 
