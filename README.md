@@ -69,7 +69,7 @@ Stubr is [available in Hex](https://hex.pm/packages/stubr), the package can be i
 
     ```elixir
     def deps do
-      [{:stubr, "~> 1.0.0"}]
+      [{:stubr, "~> 1.0.1"}]
     end
     ```
 
