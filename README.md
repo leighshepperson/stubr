@@ -2,7 +2,7 @@
 
 ![Build Status](https://travis-ci.org/leighshepperson/stubr.svg?branch=master)
 
-In functional languages you should write pure functions. However, sometimes we need functions to call external API’s. But these effect the state of the system. So these functions are impure. In non-functional languages you create mocks to test expectations. For example, you might create a mock of a repository. And the test checks it calls the update function. You are testing a side effect. This is something you should avoid in functional languages. 
+In functional languages you should write pure functions. However, sometimes we need functions to call external API’s. But these affect the state of the system. So these functions are impure. In non-functional languages you create mocks to test expectations. For example, you might create a mock of a repository. And the test checks it calls the update function. You are testing a side effect. This is something you should avoid in functional languages. 
 
 Instead of mocks we should use stubs. Mocking frameworks tend to treat them as interchangeable. This makes it hard to tell them apart. So it is good to have a simple definition. [Quoting](http://martinfowler.com/articles/mocksArentStubs.html) Martin Fowler:
 
