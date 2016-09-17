@@ -55,7 +55,7 @@ defmodule Stubr do
 
     ```
 
-    The injected `http_client` argument of the `JSONPlaceHolderAdapter.get/1_post` defaults to `HTTPoison`. This is so we can create a stub using Stubr.
+    The injected `http_client` argument of `JSONPlaceHolderAdapter.get/1_post` defaults to `HTTPoison`. This is so we can create a stub using Stubr.
 
     Stubr is good for using test data to define stubs. Pattern match on test data to create the function representations. Use Stubr to create the stub:
 
