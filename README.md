@@ -1,6 +1,6 @@
 # Stubr
 
-https://travis-ci.org/leighshepperson/stubr.svg?branch=master
+![Build Status](https://travis-ci.org/leighshepperson/stubr.svg?branch=master)
 
 In functional languages you should write pure functions. However, sometimes we need functions to call external API’s. But these effect the state of the system. So these functions are impure. In non-functional languages you create mocks to test expectations. For example, you might create a mock of a repository. And the test checks it calls the update function. You are testing a side effect. This is something you should avoid in functional languages. 
 
