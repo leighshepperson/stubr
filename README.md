@@ -24,7 +24,7 @@ So what does Stubr provide:
 ## Example
 Say we want to test this module in different scenarios:
 
-```
+```elixir
 defmodule WebGet do
   def get_body_and_upcase(url, http_client \\ HTTPoison) do
     {:ok, response} = http_client.get(url)
@@ -35,7 +35,7 @@ end
 
 Then we can use Stubr and test cases to get the http_client to provide different responses:
 
-```
+```elixir
 test "It can upcase the body returned in the response" do
   test_cases = [
     %{url: "www.google.com", resp: {:ok, %HTTPoison.Response{body: "google"}}, expected: "GOOGLE"},
