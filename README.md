@@ -42,10 +42,10 @@ test "It can upcase the body returned in the response" do
   ]
 
   functions_to_stub = test_cases
-   |> Enum.map(fn(%{url: url, resp: resp}) -> {:get, fn(^url) -> resp end} end)
+  |> Enum.map(fn(%{url: url, resp: resp}) -> {:get, fn(^url) -> resp end} end)
   
-   # You don't even need to provide HTTPoison - it just checks to see if HTTPoison.get/1 actually exists
-   stubbed_http_client = Stubr.stub(HTTPoison, functions_to_stub)
+  # You don't even need to provide HTTPoison - it just checks to see if HTTPoison.get/1 actually exists
+  stubbed_http_client = Stubr.stub(HTTPoison, functions_to_stub)
 
   for %{expected: expected, url: url} <- test_cases do
     assert WebGet.get_body_and_upcase(url, stubbed_http_client) == expected
