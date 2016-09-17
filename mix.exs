@@ -26,8 +26,9 @@ defmodule Stubr.Mixfile do
 
   defp description do
     """
-    Framework used to stub modules and provide canned answers during a test.
-    Easy to implement. It is not a Mock framework - Stubr just makes stubs!
+    Stubr - an amazingly stub-only framework for Elixir. Used to stub
+    modules and provide canned answers during a test. Easy to implement.
+    It is not a Mock framework - Stubr just makes stubs!
     """
   end
 

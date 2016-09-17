@@ -15,6 +15,7 @@ So what does Stubr provide:
 * Stubr makes sure the module you stub HAS the function you want to stub
 * Stubr works without an explicit module. You set it up how you want
 * Stubr won't redefine your modules!
+* Stubr has ZERO dependencies
 
 ## Example
 The expression
@@ -50,13 +51,13 @@ To learn more about this approach, see [https://www.infoq.com/presentations/mock
 
 ## Installation
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed as:
+Stubr is [available in Hex](https://hex.pm/packages/stubr), the package can be installed as:
 
   1. Add `stubr` to your list of dependencies in `mix.exs`:
 
     ```elixir
     def deps do
-      [{:stubr, "~> 0.1.0"}]
+      [{:stubr, "~> 1.0.0"}]
     end
     ```
 
