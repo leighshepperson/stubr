@@ -221,9 +221,9 @@ defmodule Stubr do
   end
 
   defp create_module(body) do
-    random_string = (for _ <- 1..32, do: :rand.uniform(26) + 96)
+    random_char_list = (for _ <- 1..32, do: :rand.uniform(26) + 96)
 
-    module_name = random_string
+    module_name = random_char_list
     |> to_string
     |> String.capitalize
 
