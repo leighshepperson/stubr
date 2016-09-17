@@ -140,7 +140,7 @@ defmodule Stubr do
     {:gravitational_acceleration, fn(:mars) -> 3.7 end},
     {:gravitational_acceleration, fn(:earth, :amsterdam) -> 9.813 end},
     {:gravitational_acceleration, fn(:earth, :havana) -> 9.788  end},
-    {:gravitational_attraction, fn(m1, m2, r) -> Float.round(6.674e-11 *(m1 * m2) / (r * r), 3) end}
+    {:gravitational_attraction, fn(m1, m2, r) -> 6.674e-11 *(m1 * m2) / (r * r) end}
   ])
 
   assert stubbed.gravitational_acceleration(:earth) == 9.8
