@@ -27,11 +27,16 @@ defmodule Stubr do
   """
 
   @typedoc """
+  The function name type.
+  """
+  @type function_name :: atom
+
+  @typedoc """
   This is a representation of a function. The first element is the
   function name atom. The second element is an anonymous function.
   This defines the behaviour of the function.
   """
-  @type function_representation :: {atom, (... -> any)}
+  @type function_representation :: {function_name, (... -> any)}
 
   @doc """
   Creates a stub. The module argument prevents the creation of
