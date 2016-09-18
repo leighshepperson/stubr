@@ -171,7 +171,7 @@ Mark Seemann's [blog post](http://blog.ploeh.dk/2013/10/23/mocks-for-commands-st
 
 * Metadata. Record information about calls
 * Behaviour aware stubs
-* Auto-stub modules based on specs
+* Auto-stub modules: Defer to the original functionality
 
 ## Installation
 

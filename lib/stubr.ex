@@ -2,17 +2,8 @@ defmodule Stubr do
   @moduledoc """
   This module contains functions that create stub modules.
 
-  The stub functions `stub/1` and `stub/2` take a list of
-  function representations and create a stubbed module. Here,
-  a function representation is of the form:
-
-      {:function_name, (... -> any())}
-
-  For example:
-
-      stubbed = Stubr.stub([{:add, fn(i, j) -> i + j end}])
-
-      stubbed.add(1, 2) = 3
+  The functions `stub/1` and `stub/2` create new modules based on
+  a list of function representations.
 
   The function `stub/2` also accepts a module as an optional
   first parameter. In this case, it checks whether the function(s)
@@ -21,12 +12,12 @@ defmodule Stubr do
   """
 
   @typedoc """
-  This represents a function name
+  Represents a function name
   """
   @type function_name :: atom
 
   @typedoc """
-  This represents a function. The first element is an atom that represents
+  Represents a function. The first element is an atom that represents
   the function name. The second element is an anonymous function that
   defines the behaviour of the function
   """
