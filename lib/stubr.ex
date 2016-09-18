@@ -52,6 +52,7 @@ defmodule Stubr do
   @doc """
   Creates a stub. It returns a new module. The function
   representations define its functions.
+
   ## Examples
       iex> Stubr.stub([{:add, fn (i, 2) -> i + 2 end}]).add(3, 2)
       5
