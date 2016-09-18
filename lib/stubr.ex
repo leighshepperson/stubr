@@ -1,190 +1,62 @@
 defmodule Stubr do
   @moduledoc """
-  In functional languages you should write pure functions. However, sometimes we need functions to call external API’s. But these affect the state of the system. So these functions are impure. In non-functional languages you create mocks to test expectations. For example, you might create a mock of a repository. And the test checks it calls the update function. You are testing a side effect. This is something you should avoid in functional languages.
+  Provides a set of functions to stub modules.
 
-  Instead of mocks we should use stubs. Mocking frameworks tend to treat them as interchangeable. This makes it hard to tell them apart. So it is good to have a simple definition. [Quoting](http://martinfowler.com/articles/mocksArentStubs.html) Martin Fowler:
+      iex> Stubr.stub([{:get, fn i -> i end}]).get(:ok)
+      :ok
 
-  * Stubs provide canned answers to calls made during the test, usually not responding at all to anything outside what's programmed in for the test. Stubs may also record information about calls, such as an email gateway stub that remembers the messages it 'sent', or maybe only how many messages it 'sent'.
-  * Mocks are objects pre-programmed with expectations which form a specification of the calls they are expected to receive.
+  The stub function creates a new module with a random name under the
+  Stubr namespace. This is to stop collisions with other modules.
+  It generates stubs by passing in a list of function representations.
+  A function representation takes the following form:
 
-  So what does Stubr provide:
+      {:function_name, (... -> any())}
 
-  * Stubr is not a mock framework
-  * Stubr is not a macro
-  * Stubr provides canned answers to calls made during a test
-  * Stubr makes it easy to create stubs
-  * Stubr makes sure the module you stub HAS the function you want to stub
-  * Stubr stubs as many functions and patterns as you want
-  * Stubr works without an explicit module. You set it up how you want
-  * Stubr lets you do asynchronous tests
-  * Stubr won't redefine your modules!
-  * Stubr has ZERO dependencies
+  The stub function can create stubs with functions of different arity,
+  argument patterns and names.
 
-  ## Example - Adapter for JSON PlaceHolder API
+  Stubs behave in the expected way:
 
-  This is a simple JSONPlaceHolderAdapter built using TDD:
+      stubbed = Stubr.stub([{:add, fn(i, j) -> i + j end}])
 
-  ```elixir
-  defmodule Post do
-    defstruct [:title, :body, :userId, :id]
-  end
+      stubbed.add(1, 2) = 3
 
-  defmodule JSONPlaceHolderAdapter do
-    @posts_url "http://jsonplaceholder.typicode.com/posts"
-
-    def get_post(id, http_client \\ HTTPoison) do
-      "#\{@posts_url\}/#\{id\}"
-      |> http_client.get
-      |> handle_response
-    end
-
-    defp handle_response({:ok, %HTTPoison.Response{body: body, status_code: 200}}) do
-      post = body
-      |> Poison.decode!(as: %Post{})
-      {:ok, post}
-    end
-
-    defp handle_response({:ok, _}) do
-      {:error, "Bad request"}
-    end
-
-    defp handle_response({:error, _}) do
-      {:error, "Something went wrong"}
-    end
-  end
-  ```
-
-  The injected `http_client` argument of `JSONPlaceHolderAdapter.get/1_post` defaults to `HTTPoison`. This is so we can create a stub using Stubr.
-
-  Stubr is good for using test data to define stubs. Pattern match on test data to create the function representations. Use Stubr to create the stub:
-
-  ```elixir
-  @post_url "http://jsonplaceholder.typicode.com/posts"
-
-  @good_test_data [
-    %{
-      id: 1,
-      post_url: "#\{@post_url\}/1",
-      expected: %Post{title: "A title", body: "Some body", userId: 2, id: 1},
-      canned_body: "{\"userId\": 2,\"id\": 1,\"title\": \"A title\",\"body\": \"Some body\"}"
-    },
-    %{
-      id: 2,
-      post_url: "#\{@post_url\}/2",
-      expected: %Post{title: "Another title", body: "Some other body", userId: 3, id: 2},
-      canned_body: "{\"userId\": 3,\"id\": 2,\"title\": \"Another title\",\"body\": \"Some other body\"}"
-    }
-  ]
-
-  test "If the call to get a post is successful, then a return post struct with id, userId, body and title" do
-
-    # Dynamically build up the functions to stub. Alternatively, store them with the test data
-    functions = @good_test_data
-    |> Enum.map(
-      fn %{post_url: post_url, canned_body: canned_body}
-      # pin operator ^ is used to guarantee the correct response is returned
-      -> {:get, fn(^post_url) -> {:ok, %HTTPoison.Response{body: canned_body, status_code: 200}} end}
-      end
-    )
-
-    http_client_stub = Stubr.stub(HTTPoison, functions)
-
-    for %{id: id, expected: expected} <- @good_test_data do
-      assert JSONPlaceHolderAdapter.get_post(id, http_client_stub) == {:ok, expected}
-    end
-  end
-
-  ```
-
-  The unsuccessful tests work in much the same way:
-
-  ```elixir
-  @bad_test_data [
-    %{id: 1, post_url: "#\{@post_url\}/1", status_code: 400},
-    %{id: 2, post_url: "#\{@post_url\}/2", status_code: 500},
-    %{id: 3, post_url: "#\{@post_url\}/3", status_code: 503}
-  ]
-
-  test "If the response returns an invalid status code, then return error and a message" do
-    functions = @bad_test_data
-    |> Enum.map(
-      fn %{status_code: status_code, post_url: post_url}
-        -> {:get, fn(^post_url) -> {:ok, %HTTPoison.Response{status_code: status_code}} end}
-      end
-    )
-
-    http_client_stub = Stubr.stub(HTTPoison, functions)
-
-    for %{id: id} <- @bad_test_data do
-      assert JSONPlaceHolderAdapter.get_post(id, http_client_stub) == {:error, "Bad request"}
-    end
-  end
-
-  test "If attempt to get data was unsuccessful, then return error and a message" do
-    bad_response = {:get, fn(_) -> {:error, %HTTPoison.Error{}} end}
-
-    http_client_stub = Stubr.stub(HTTPoison, [bad_response])
-
-    assert JSONPlaceHolderAdapter.get_post(2, http_client_stub) == {:error, "Something went wrong"}
-  end
-
-  ```
-
-  ## Example - Creating Complex Stubs
-
-  Stubr can create complex stubs:
-
-  ```elixir
-  stubbed = Stubr.stub([
-    {:gravitational_acceleration, fn(:earth) -> 9.8 end},
-    {:gravitational_acceleration, fn(:mars) -> 3.7 end},
-    {:gravitational_acceleration, fn(:earth, :amsterdam) -> 9.813 end},
-    {:gravitational_acceleration, fn(:earth, :havana) -> 9.788  end},
-    {:gravitational_attraction, fn(m1, m2, r) -> 6.674e-11 *(m1 * m2) / (r * r) end}
-  ])
-
-  assert stubbed.gravitational_acceleration(:earth) == 9.8
-  assert stubbed.gravitational_acceleration(:mars) == 3.7
-  assert stubbed.gravitational_acceleration(:earth, :amsterdam) == 9.813
-  assert stubbed.gravitational_acceleration(:earth, :havana) == 9.788
-  assert stubbed.gravitational_attraction(5.97e24, 1.99e30, 1.5e11) == 3.523960986666667e22
-  ```
+  Additionally, the first argument of the stub function is an optional
+  module. This is used to stop it from creating stubs of undefined
+  functions.
   """
 
-  @doc ~S"""
-  Creates a stub using a module as a safety net. Define the functions how you like,
-  just make sure they are defined in the module you want to stub. Otherwise it will
-  throw an `UndefinedFunctionError`. Useful if you are stubbing modules from libraries
-  that could depreciate your favorite function.
+  @typedoc """
+  This is a representation of a function. The first element is the
+  function name atom. The second element is an anonymous function.
+  This defines the behaviour of the function.
+  """
+  @type function_representation :: {atom, (... -> any)}
+
+  @doc """
+  Creates a stub. The module argument prevents the creation of
+  invalid stubs. It should return a new module. The function
+  representations define its functions. Returns an
+  `UndefinedFunctionError` if given invalid function representations.
 
   ## Examples
-      iex> defmodule Foo, do: def test(1), do: :ok
-      iex> Stubr.stub(Foo, [{:test, fn(_) -> :good_bye end}]).test(1)
-      :good_bye
-
-      iex> defmodule Bar, do: def test(x, y, z), do: x + y + z
-      iex> Stubr.stub(Bar, [{:test, fn(1, 2, x) -> 1 + 2 * x end}]).test(1, 2, 9)
-      19
+      iex> Stubr.stub(String, [{:to_atom, fn ("hello") -> :hello end}]).to_atom("hello")
+      :hello
   """
-  @spec stub(module(), list({atom(), (... -> any())})) :: module() | Error
+  @spec stub(module, [function_representation]) :: module | no_return
   def stub(module, function_reps) do
     {:ok} = is_defined!(module, function_reps)
     stub(function_reps)
   end
 
-  @doc ~S"""
-  Creates a stub. Define the functions how you like. Useful if you are building
-  an application using TDD. Stub it out first, then create the implementation when
-  you know its behaviour.
-
+  @doc """
+  Creates a stub. It returns a new module. The function
+  representations define its functions.
   ## Examples
-      iex> Stubr.stub([{:foo, fn(1, 2, 3) -> :bar end}]).foo(1, 2, 3)
-      :bar
-
-      iex> Stubr.stub([{:bar, fn(x, y, z, u) -> x*y*z + u end}]).bar(1, 2, 3, 4)
-      10
+      iex> Stubr.stub([{:add, fn (i, 2) -> i + 2 end}]).add(3, 2)
+      5
   """
-  @spec stub(list({atom(), (... -> any())})) :: module() | Error
+  @spec stub([function_representation]) :: module | no_return
   def stub(function_reps) do
     {:ok, pid} = StubrAgent.start_link
 
@@ -206,6 +78,7 @@ defmodule Stubr do
     end
 
     {:ok}
+
   end
 
   defp create_body(function_reps, pid) do
