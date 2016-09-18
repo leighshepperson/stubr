@@ -181,7 +181,7 @@ Stubr is [available in Hex](https://hex.pm/packages/stubr), the package can be i
 
     ```elixir
     def deps do
-      [{:stubr, "~> 1.0.2"}]
+      [{:stubr, "~> 1.0.3"}]
     end
     ```
 
