@@ -1,48 +1,44 @@
 defmodule Stubr do
   @moduledoc """
-  Provides a set of functions to stub modules.
+  This module contains functions that create stub modules.
 
-      iex> Stubr.stub([{:get, fn i -> i end}]).get(:ok)
-      :ok
-
-  The stub function creates a new module with a random name under the
-  Stubr namespace. This is to stop collisions with other modules.
-  It generates stubs by passing in a list of function representations.
-  A function representation takes the following form:
+  The stub functions `stub/1` and `stub/2` take a list of
+  function representations and create a stubbed module. Here,
+  a function representation is of the form:
 
       {:function_name, (... -> any())}
 
-  The stub function can create stubs with functions of different arity,
-  argument patterns and names.
-
-  Stubs behave in the expected way:
+  For example:
 
       stubbed = Stubr.stub([{:add, fn(i, j) -> i + j end}])
 
       stubbed.add(1, 2) = 3
 
-  Additionally, the first argument of the stub function is an optional
-  module. This is used to stop it from creating stubs of undefined
-  functions.
+  The function `stub/2` also accepts a module as an optional
+  first parameter. In this case, it checks whether the function(s)
+  you want to stub exist in that module. Otherwise, it raises an
+  `UndefinedFunctionError`.
   """
 
   @typedoc """
-  The function name type.
+  This represents a function name
   """
   @type function_name :: atom
 
   @typedoc """
-  This is a representation of a function. The first element is the
-  function name atom. The second element is an anonymous function.
-  This defines the behaviour of the function.
+  This represents a function. The first element is an atom that represents
+  the function name. The second element is an anonymous function that
+  defines the behaviour of the function
   """
   @type function_representation :: {function_name, (... -> any)}
 
   @doc """
-  Creates a stub. The module argument prevents the creation of
-  invalid stubs. It should return a new module. The function
-  representations define its functions. Returns an
-  `UndefinedFunctionError` if given invalid function representations.
+  Creates a stub using a list of function representations and a
+  module to check for function existance.
+
+  The module argument prevents the creation of invalid stubs by
+  checking if the function representations are defined for that
+  module. Otherwise, it returns an `UndefinedFunctionError`.
 
   ## Examples
       iex> Stubr.stub(String, [{:to_atom, fn ("hello") -> :hello end}]).to_atom("hello")
@@ -55,8 +51,7 @@ defmodule Stubr do
   end
 
   @doc """
-  Creates a stub. It returns a new module. The function
-  representations define its functions.
+  Creates a stub using a list of function representations.
 
   ## Examples
       iex> Stubr.stub([{:add, fn (i, 2) -> i + 2 end}]).add(3, 2)
