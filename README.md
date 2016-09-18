@@ -84,7 +84,9 @@ You can see how this works in the following example:
 
 test "If the call to get a post is successful, then a return post struct with id, userId, body and title" do
   
-  # Build the function definitions using the good test data. Alternatively, you could store the anonymous functions with the test data to reduce the amount of code you need to write here.
+  # Build the function definitions using the test data. 
+  # Alternatively, you could store the anonymous functions
+  # with the test data to reduce the amount boilerplate code.
 
   functions = @good_test_data
   |> Enum.map(
