@@ -38,7 +38,7 @@ defmodule Stubr do
   @spec stub(module, [function_representation]) :: module | no_return
   def stub(module, function_reps) do
     {:ok} = is_defined!(module, function_reps)
-    stub(function_reps)
+    do_stub(module, function_reps)
   end
 
   @doc """
@@ -50,12 +50,27 @@ defmodule Stubr do
   """
   @spec stub([function_representation]) :: module | no_return
   def stub(function_reps) do
+    do_stub(nil, function_reps)
+  end
+
+  defp do_stub(module, function_reps) do
     {:ok, pid} = StubrAgent.start_link
 
     function_reps
     |> Enum.each(&StubrAgent.register_function(pid, &1))
 
-    function_reps
+    function_args =    function_reps
+    |> get_args
+
+    if !(module == nil) do
+    function_args = module.__info__(:functions)
+    |> Enum.map(fn{k, v} -> {k, create_args_arity(v)} end)
+
+    StubrAgent.register_module(pid, module)
+  end
+
+
+    function_args
     |> create_body(pid)
     |> create_module
   end
@@ -73,9 +88,7 @@ defmodule Stubr do
 
   end
 
-  defp create_body(function_reps, pid) do
-    function_args = function_reps |> get_args
-
+  defp create_body(function_args, pid) do
     quote bind_quoted: [function_args: Macro.escape(function_args), pid: pid] do
       for {name, args} <- function_args do
         def unquote(name)(unquote_splicing(args)) do
@@ -104,6 +117,10 @@ defmodule Stubr do
 
   defp create_args(function) do
     arity = (function |> :erlang.fun_info)[:arity]
+    create_args_arity(arity)
+  end
+
+  defp create_args_arity(arity) do
     Enum.map(1..arity, &(Macro.var (:"arg#{&1}"), nil))
   end
 

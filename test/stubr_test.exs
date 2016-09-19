@@ -147,4 +147,23 @@ defmodule StubrTest do
     assert stubbed.foo(1, 2) == :ok
     assert stubbed.foo(4, 2) == :ok
   end
+
+  test "It can defer to the original functionality of the stubbed module" do
+    stubbed = Stubr.stub(Float, [
+      {:ceil, fn 0.8 -> :stubbed_return end},
+      {:parse, fn x -> :stubbed_return end},
+      {:round, fn(_, 1) -> :stubbed_return end},
+      {:round, fn(1, 2) -> :stubbed_return end}
+    ])
+
+    assert stubbed.ceil(0.8) == :stubbed_return
+    assert stubbed.parse("0.3") == :stubbed_return
+    assert stubbed.round(8, 1) == :stubbed_return
+    assert stubbed.round(1, 2) == :stubbed_return
+    assert stubbed.round(1.2) == 1
+    assert stubbed.round(1.324, 2) == 1.32
+    assert stubbed.ceil(1.2) == 2
+    assert stubbed.ceil(1.2345, 2) == 1.24
+    assert stubbed.to_string(2.3) == "2.3"
+  end
 end
