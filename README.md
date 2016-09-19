@@ -57,7 +57,7 @@ end
 
 ```
 
-Note the injected `http_client` argument of `JSONPlaceHolderAdapter.get/1_post` defaults to `HTTPoison`. This is so we can create a stub using Stubr. 
+Note the injected `http_client` argument of `JSONPlaceHolderAdapter.get_post/2` defaults to `HTTPoison`. This is so we can create a stub using Stubr. 
 
 Stubr is good for using test data to define stubs. It lets you iterate through test data to create the function representations. For example, if the stub returns a unique string A for userId 1 and a unique string B for userId 2 and something else parses those strings to return X and Y, then you can only expect to get X if and only if the user with userId 1 went through and Y if and only if the user with userId 2 went through. 
 
@@ -89,14 +89,12 @@ test "If the call to get a post is successful, then a return post struct with id
   # with the test data to reduce the amount boilerplate code.
 
   functions = @good_test_data
-  |> Enum.map(
-    fn %{post_url: post_url, canned_body: canned_body}
+  |> Enum.map fn %{post_url: post_url, canned_body: canned_body} ->
 
-    # Note, the pin operator ^ guarantees it returns the correct response for a particular input
+      # Note, the pin operator ^ guarantees it returns the correct response for a particular input
 
-    -> {:get, fn(^post_url) -> {:ok, %HTTPoison.Response{body: canned_body, status_code: 200}} end}
+      {:get, fn(^post_url) -> {:ok, %HTTPoison.Response{body: canned_body, status_code: 200}} end}
     end
-  )
 
   http_client_stub = Stubr.stub(HTTPoison, functions)
 
@@ -118,11 +116,9 @@ The remaining tests are set up the same way:
 
 test "If the response returns an invalid status code, then return error and a message" do
   functions = @bad_test_data
-  |> Enum.map(
-    fn %{status_code: status_code, post_url: post_url}
-      -> {:get, fn(^post_url) -> {:ok, %HTTPoison.Response{status_code: status_code}} end}
+  |> Enum.map fn %{status_code: status_code, post_url: post_url} -> 
+      {:get, fn(^post_url) -> {:ok, %HTTPoison.Response{status_code: status_code}} end}
     end
-  )
 
   http_client_stub = Stubr.stub(HTTPoison, functions)
 
