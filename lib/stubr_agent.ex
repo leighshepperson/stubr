@@ -2,7 +2,7 @@ defmodule StubrAgent do
   @moduledoc false
 
   def start_link do
-    Agent.start_link(fn -> %{functions: [], module: nil} end)
+    Agent.start_link(fn -> %{function_impls: [], module: nil} end)
   end
 
   def register_module(pid, module) do
@@ -10,32 +10,36 @@ defmodule StubrAgent do
   end
 
   def register_function(pid, {function_name, function_impl}) do
-    Agent.update(pid,
-      fn %{functions: functions} = state -> %{state | functions: functions ++ [{function_name, function_impl}] }
-      end)
-  end
-
-  def eval_function(pid, {function_name, arg_list}) do
-    args = arg_list
-    |> Enum.map(fn({_, arg}) -> arg end)
-
-    module = pid |> Agent.get(&(&1.module))
-    pid
-    |> Agent.get(&Keyword.get_values(&1.functions, function_name))
-    |> eval_functions(args, nil, module, function_name)
-  end
-
-  defp eval_functions([], args, error, module, function_name) do
-    case module do
-      nil -> raise error
-      _ -> apply(module, function_name, args)
+    Agent.update pid, fn %{function_impls: function_impls} = state ->
+      %{state | function_impls: function_impls ++ [{function_name, function_impl}]}
     end
   end
-  defp eval_functions([function_impl|function_impls], args, _, module, function_name) do
+
+  def eval_function(pid, {function_name, binding}) do
+    variable_values = for {_, variable_value} <- binding, do: variable_value
+
+    function_impls = pid
+    |> Agent.get(&Keyword.get_values(&1.function_impls, function_name))
+
     try do
-      apply(function_impl, args)
+      eval_function_impls(function_impls, variable_values, nil)
     rescue
-      error -> eval_functions(function_impls, args, error, module, function_name)
+      error -> defer_to_module(Agent.get(pid, &(&1.module)), function_name, variable_values, error)
+    end
+  end
+
+  defp defer_to_module(nil, _, _, error),
+    do: raise error
+  defp defer_to_module(module, function_name, variable_values, _),
+    do: apply(module, function_name, variable_values)
+
+  defp eval_function_impls([], variable_values, error),
+    do: raise error
+  defp eval_function_impls([function_impl|function_impls], variable_values, _) do
+    try do
+      apply(function_impl, variable_values)
+    rescue
+      error -> eval_function_impls(function_impls, variable_values, error)
     end
   end
 
