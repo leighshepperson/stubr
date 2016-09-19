@@ -59,18 +59,8 @@ defmodule Stubr do
     function_reps
     |> Enum.each(&StubrAgent.register_function(pid, &1))
 
-    function_args =    function_reps
-    |> get_args
-
-    if !(module == nil) do
-    function_args = module.__info__(:functions)
-    |> Enum.map(fn{k, v} -> {k, create_args_arity(v)} end)
-
-    StubrAgent.register_module(pid, module)
-  end
-
-
-    function_args
+    pid
+    |> get_args(module, function_reps)
     |> create_body(pid)
     |> create_module
   end
@@ -110,18 +100,26 @@ defmodule Stubr do
     module
   end
 
-  defp get_args({name, function}),
-    do: {name, create_args(function)}
-  defp get_args(functions_reps),
-    do: functions_reps |> Enum.map(&get_args(&1))
-
-  defp create_args(function) do
-    arity = (function |> :erlang.fun_info)[:arity]
-    create_args_arity(arity)
+  defp get_args(_, nil, function_reps) do
+    function_reps |> get_args
   end
 
-  defp create_args_arity(arity) do
-    Enum.map(1..arity, &(Macro.var (:"arg#{&1}"), nil))
+  defp get_args(pid, module, _) do
+    StubrAgent.register_module(pid, module)
+    module.__info__(:functions) |> get_args
+  end
+
+  defp get_args({name, function}) when is_function(function) do
+    arity = (function |> :erlang.fun_info)[:arity]
+    get_args({name, arity})
+  end
+
+  defp get_args({name, arity}) when is_number(arity) do
+    {name, Enum.map(1..arity, &(Macro.var (:"arg#{&1}"), nil))}
+  end
+
+  defp get_args(functions_reps) do
+    functions_reps |> Enum.map(&get_args(&1))
   end
 
 end

@@ -151,7 +151,7 @@ defmodule StubrTest do
   test "It can defer to the original functionality of the stubbed module" do
     stubbed = Stubr.stub(Float, [
       {:ceil, fn 0.8 -> :stubbed_return end},
-      {:parse, fn x -> :stubbed_return end},
+      {:parse, fn _ -> :stubbed_return end},
       {:round, fn(_, 1) -> :stubbed_return end},
       {:round, fn(1, 2) -> :stubbed_return end}
     ])
