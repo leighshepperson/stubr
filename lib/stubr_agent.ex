@@ -5,17 +5,11 @@ defmodule StubrAgent do
     Agent.start_link(fn -> %{function_impls: [], module: nil} end)
   end
 
-  def register_module(pid, module) do
-    Agent.update(pid, fn state -> %{state | module: module} end)
+  def register(pid, %{function_impls: function_impls, module: module}) do
+    Agent.update(pid, fn stubr -> %{stubr | function_impls: function_impls, module: module} end)
   end
 
-  def register_function(pid, {function_name, function_impl}) do
-    Agent.update pid, fn %{function_impls: function_impls} = state ->
-      %{state | function_impls: function_impls ++ [{function_name, function_impl}]}
-    end
-  end
-
-  def eval_function!(pid, {function_name, binding}) do
+  def eval_function!(pid, {function_name, binding}, auto_stub) do
     variable_values = for {_, variable_value} <- binding, do: variable_value
 
     function_impls = pid
@@ -24,16 +18,16 @@ defmodule StubrAgent do
     try do
       eval_function_impls!(function_impls, variable_values, nil)
     rescue
-      error -> defer_to_module!(Agent.get(pid, &(&1.module)), function_name, variable_values, error)
+      error -> defer_to_module!(Agent.get(pid, &(&1.module)), auto_stub, function_name, variable_values, error)
     end
   end
 
-  defp defer_to_module!(nil, _, _, error),
-    do: raise error
-  defp defer_to_module!(module, function_name, variable_values, _),
+  defp defer_to_module!(module, true, function_name, variable_values, _),
     do: apply(module, function_name, variable_values)
+  defp defer_to_module!(nil, _ ,_, _, error),
+    do: raise error
 
-  defp eval_function_impls!([], variable_values, error),
+  defp eval_function_impls!([], _, error),
     do: raise error
   defp eval_function_impls!([function_impl|function_impls], variable_values, _) do
     try do

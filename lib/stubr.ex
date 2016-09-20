@@ -23,99 +23,74 @@ defmodule Stubr do
   """
   @type function_representation :: {function_name, (... -> any)}
 
-  @defaults [auto_stub: false]
+  @doc """
+  Creates a stub using a list of function representations.
+
+  The module argument prevents the creation of invalid stubs by
+  checking if the function representations are defined for that
+  module. Otherwise, it returns an `UndefinedFunctionError`.
+
+  If the auto_stub option is set to true, then it will defer all
+  un-stubbed functions to the original module.
+
+  ## Examples
+      iex> Stubr.stub!(String, [{:to_atom, fn ("foo") -> :stubbed end}]).to_atom("foo")
+      :stubbed
+      iex> Stubr.stub!(String, [{:to_atom, fn ("foo") -> :stubbed end}], auto_stub: true).to_atom("bar")
+      :bar
+  """
+  @spec stub!(module, [function_representation], [auto_stub: boolean]) :: module | no_return
+  def stub!(module, function_impls, auto_stub: auto_stub),
+    do: do_stub!(module, function_impls, auto_stub)
 
   @doc """
-  Creates a stub using a list of function representations and a
-  module to check for function existance.
+  Creates a stub using a list of function representations.
 
   The module argument prevents the creation of invalid stubs by
   checking if the function representations are defined for that
   module. Otherwise, it returns an `UndefinedFunctionError`.
 
   ## Examples
-      iex> Stubr.stub!(String, [{:to_atom, fn ("hello") -> :hello end}]).to_atom("hello")
-      :hello
+      iex> Stubr.stub!(String, [{:to_atom, fn ("foo") -> :stubbed end}]).to_atom("foo")
+      :stubbed
   """
-  @spec stub!(module, [function_representation], opts: []) :: module | no_return
-  def stub!(module, function_reps, opts \\ []) do
-    opts = Keyword.merge(@defaults, opts) |> Enum.into(%{})
-
-    {:ok} = is_defined!(module, function_reps)
-
-    {:ok, pid} = StubrAgent.start_link
-
-    register_module(pid, module)
-
-    register_functions(pid, function_reps)
-
-    %{auto_stub: auto_stub} = opts
-
-    function_arities = case auto_stub do
-      true -> module.__info__(:functions)
-      false -> get_arities(function_reps)
-    end
-
-    do_stub!(function_arities, pid)
-  end
+  @spec stub!(module, [function_representation]) :: module | no_return
+  def stub!(module, function_impls),
+    do: do_stub!(module, function_impls, false)
 
   @doc """
   Creates a stub using a list of function representations.
 
   ## Examples
-      iex> Stubr.stub!([{:add, fn (i, 2) -> i + 2 end}]).add(3, 2)
-      5
+      iex> Stubr.stub!([{:to_atom, fn ("foo") -> :stubbed end}]).to_atom("foo")
+      :stubbed
   """
   @spec stub!([function_representation]) :: module | no_return
-  def stub!(function_reps) do
-    {:ok, pid} = StubrAgent.start_link
+  def stub!(function_impls),
+    do: do_stub!(nil, function_impls, nil)
 
-    register_functions(pid, function_reps)
+  defp do_stub!(module, function_impls, auto_stub) do
+    :ok = can_stub!(module, function_impls)
 
-    function_arities = get_arities(function_reps)
+    pid = register(module, function_impls)
+    arities = get_arities(module, function_impls, auto_stub)
 
-    do_stub!(function_arities, pid)
-  end
-
-  defp get_arities(function_reps) do
-    for {name, function} <- function_reps do
-      {name, (function |> :erlang.fun_info)[:arity]}
-    end
-  end
-
-  defp do_stub!(function_arities, pid) do
-    function_arities
-    |> get_args
-    |> create_body(pid)
+    arities
+    |> create_args
+    |> create_body(pid, auto_stub)
     |> create_module
   end
 
-  defp register_module(pid, module) do
-    StubrAgent.register_module(pid, module)
-  end
+  defp create_args({name, arity}),
+    do: {name, Enum.map(1..arity, &(Macro.var (:"arg#{&1}"), nil))}
+  defp create_args(function_impls),
+    do: function_impls |> Enum.map(&create_args(&1))
 
-  defp register_functions(pid, function_reps) do
-    function_reps
-    |> Enum.each(&StubrAgent.register_function(pid, &1))
-  end
-
-  defp is_defined!(module, function_reps) do
-    module_function_set = MapSet.new(module.module_info(:functions))
-
-    for {name, impl} <- function_reps do
-      if !MapSet.member?(module_function_set, {name, :erlang.fun_info(impl)[:arity]}) do
-        raise UndefinedFunctionError
-      end
-    end
-
-    {:ok}
-  end
-
-  defp create_body(function_args, pid) do
-    quote bind_quoted: [function_args: Macro.escape(function_args), pid: pid] do
-      for {name, args} <- function_args do
+  defp create_body(args, pid, auto_stub) do
+    quote bind_quoted: [args: Macro.escape(args), pid: pid, auto_stub: auto_stub] do
+      for {name, args} <- args do
         def unquote(name)(unquote_splicing(args)) do
-          StubrAgent.eval_function!(unquote(pid), {unquote(name), binding()})
+          StubrAgent.eval_function!(unquote(pid), {unquote(name), binding()}, unquote(auto_stub))
         end
       end
     end
@@ -133,12 +108,38 @@ defmodule Stubr do
     module
   end
 
-  defp get_args(function_reps) when is_list(function_reps) do
-    function_reps |> Enum.map(&get_args(&1))
+  defp register(module, function_impls) do
+    {:ok, pid} = StubrAgent.start_link
+    StubrAgent.register(pid, %{module: module, function_impls: function_impls})
+    pid
   end
 
-  defp get_args({name, arity}) when is_number(arity) do
-    {name, Enum.map(1..arity, &(Macro.var (:"arg#{&1}"), nil))}
+  defp can_stub!(nil, _) do
+    :ok
+  end
+
+  defp can_stub!(module, function_impls) do
+    module_functions_set = MapSet.new(module.module_info(:functions))
+    functions_set = MapSet.new(get_arities(function_impls))
+
+    case MapSet.union(module_functions_set, functions_set) == module_functions_set do
+      true -> :ok
+      false -> raise UndefinedFunctionError
+    end
+  end
+
+  defp get_arities(module, _, true) do
+    module.__info__(:functions)
+  end
+
+  defp get_arities(_, function_impls, _) do
+    get_arities(function_impls)
+  end
+
+  defp get_arities(function_impls) do
+    function_impls |> Enum.map(fn{name, function} ->
+      {name, :erlang.fun_info(function)[:arity]}
+    end)
   end
 
 end
