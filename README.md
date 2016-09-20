@@ -96,7 +96,7 @@ test "If the call to get a post is successful, then a return post struct with id
       {:get, fn(^post_url) -> {:ok, %HTTPoison.Response{body: canned_body, status_code: 200}} end}
     end
 
-  http_client_stub = Stubr.stub(HTTPoison, functions)
+  http_client_stub = Stubr.stub!(HTTPoison, functions)
 
   for %{id: id, expected: expected} <- @good_test_data do
     assert JSONPlaceHolderAdapter.get_post(id, http_client_stub) == {:ok, expected}
@@ -120,7 +120,7 @@ test "If the response returns an invalid status code, then return error and a me
       {:get, fn(^post_url) -> {:ok, %HTTPoison.Response{status_code: status_code}} end}
     end
 
-  http_client_stub = Stubr.stub(HTTPoison, functions)
+  http_client_stub = Stubr.stub!(HTTPoison, functions)
 
   for %{id: id} <- @bad_test_data do
     assert JSONPlaceHolderAdapter.get_post(id, http_client_stub) == {:error, "Bad request"}
@@ -130,7 +130,7 @@ end
 test "If attempt to get data was unsuccessful, then return error and a message" do
   bad_response = {:get, fn(_) -> {:error, %HTTPoison.Error{}} end}
 
-  http_client_stub = Stubr.stub(HTTPoison, [bad_response])
+  http_client_stub = Stubr.stub!(HTTPoison, [bad_response])
 
   assert JSONPlaceHolderAdapter.get_post(2, http_client_stub) == {:error, "Something went wrong"}
 end
@@ -142,7 +142,7 @@ end
 Stubr can create stubs with functions of different arity, argument patterns and names:
 
 ```elixir
-stubbed = Stubr.stub([
+stubbed = Stubr.stub!([
   {:gravitational_acceleration, fn(:earth) -> 9.8 end},
   {:gravitational_acceleration, fn(:mars) -> 3.7 end},
   {:gravitational_acceleration, fn(:earth, :amsterdam) -> 9.813 end},

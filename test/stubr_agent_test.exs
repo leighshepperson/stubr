@@ -24,8 +24,8 @@ defmodule StubrAgentTest do
       %{module: nil, function_impls: [{:first_function_name, foo}, {:second_function_name, bar}]}
     end)
 
-    assert StubrAgent.eval_function(pid, {:first_function_name, [a: :ok]}) == :ok
-    assert StubrAgent.eval_function(pid, {:second_function_name, [a: 2]}) == 4
+    assert StubrAgent.eval_function!(pid, {:first_function_name, [a: :ok]}) == :ok
+    assert StubrAgent.eval_function!(pid, {:second_function_name, [a: 2]}) == 4
   end
 
   test "evaluates an function as if it were pattern matched" do
@@ -37,9 +37,9 @@ defmodule StubrAgentTest do
       %{module: nil, function_impls: [{:first, foo}, {:first, bar}, {:first, baz}]}
     end)
 
-    assert StubrAgent.eval_function(pid, {:first, [a: :ok]}) == :ok
-    assert StubrAgent.eval_function(pid, {:first, [a: 1, b: 2]}) == 3
-    assert StubrAgent.eval_function(pid, {:first, [a: %{map: 6}]}) == 18
+    assert StubrAgent.eval_function!(pid, {:first, [a: :ok]}) == :ok
+    assert StubrAgent.eval_function!(pid, {:first, [a: 1, b: 2]}) == 3
+    assert StubrAgent.eval_function!(pid, {:first, [a: %{map: 6}]}) == 18
   end
 
   test "evaluates the first matching function" do
@@ -50,8 +50,8 @@ defmodule StubrAgentTest do
       %{module: nil, function_impls: [{:first, foo}, {:first, bar}]}
     end)
 
-    refute StubrAgent.eval_function(pid, {:first, [a: 1, b: 2]}) == 3
-    assert StubrAgent.eval_function(pid, {:first, [a: 1, b: 2]}) == :ok
+    refute StubrAgent.eval_function!(pid, {:first, [a: 1, b: 2]}) == 3
+    assert StubrAgent.eval_function!(pid, {:first, [a: 1, b: 2]}) == :ok
   end
 
   test "If module is provided and no function_impls match then defer to module" do
@@ -64,7 +64,7 @@ defmodule StubrAgentTest do
       %{module: Defer, function_impls: [{:first, foo}, {:first, bar}]}
     end)
 
-    assert StubrAgent.eval_function(pid, {:first, [a: 2, b: 4, c: 1]}) == 7
+    assert StubrAgent.eval_function!(pid, {:first, [a: 2, b: 4, c: 1]}) == 7
   end
 
   test "raises a FunctionClauseError if no function impl with valid params" do
@@ -75,7 +75,7 @@ defmodule StubrAgentTest do
     end)
 
     assert_raise FunctionClauseError, fn ->
-      StubrAgent.eval_function(pid, {:first_function_name, [a: :error]})
+      StubrAgent.eval_function!(pid, {:first_function_name, [a: :error]})
     end
 
   end
