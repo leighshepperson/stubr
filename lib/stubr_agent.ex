@@ -9,7 +9,7 @@ defmodule StubrAgent do
     Agent.update(pid, fn stubr -> %{stubr | function_impls: function_impls, module: module} end)
   end
 
-  def eval_function!(pid, {function_name, binding}, auto_stub) do
+  def eval_function!(pid, {function_name, binding}) do
     variable_values = for {_, variable_value} <- binding, do: variable_value
 
     function_impls = pid
@@ -18,14 +18,14 @@ defmodule StubrAgent do
     try do
       eval_function_impls!(function_impls, variable_values, nil)
     rescue
-      error -> defer_to_module!(Agent.get(pid, &(&1.module)), auto_stub, function_name, variable_values, error)
+      error -> defer_to_module!(Agent.get(pid, &(&1.module)), function_name, variable_values, error)
     end
   end
 
-  defp defer_to_module!(module, true, function_name, variable_values, _),
-    do: apply(module, function_name, variable_values)
-  defp defer_to_module!(nil, _ ,_, _, error),
+  defp defer_to_module!(nil, _, _, error),
     do: raise error
+  defp defer_to_module!(module, function_name, variable_values, _),
+    do: apply(module, function_name, variable_values)
 
   defp eval_function_impls!([], _, error),
     do: raise error

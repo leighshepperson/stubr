@@ -21,7 +21,7 @@ defmodule StubrTest do
     assert stubbed.good_bye(1, 4) == :canned_response
   end
 
-  test "It can creates a stub with a function that matches multiple patterns" do
+  test "It can create a stub with a function that matches multiple patterns" do
     stubbed = Stubr.stub!([
       {:good_bye, fn(1, 4, 9) -> :canned_response end},
       {:good_bye, fn(1, :ok, 1) -> :other_canned_response end},
@@ -63,7 +63,7 @@ defmodule StubrTest do
     end
   end
 
-  test "If the stub contains no function, then it throws an UndefinedFunctionError" do
+  test "If a function is not provided, then it throws an UndefinedFunctionError if called" do
     stubbed = Stubr.stub!([
       {:good_bye, fn(1, 4, 9) -> :three_params end}
     ])
