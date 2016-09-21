@@ -157,6 +157,29 @@ assert stubbed.gravitational_acceleration(:earth, :havana) == 9.788
 assert stubbed.gravitational_attraction(5.97e24, 1.99e30, 1.5e11) == 3.523960986666667e22
 ```
 
+## Example - Auto-Stub
+
+You can auto-stub modules by setting the `auto_stub` option to true. In this case, if you have not provided a function to stub, it will defer to the original implementation:
+
+```elixir
+stubbed = Stubr.stub!(Float, [
+  {:ceil, fn 0.8 -> :stubbed_return end},
+  {:parse, fn _ -> :stubbed_return end},
+  {:round, fn(_, 1) -> :stubbed_return end},
+  {:round, fn(1, 2) -> :stubbed_return end}
+], auto_stub: true)
+
+assert stubbed.ceil(0.8) == :stubbed_return
+assert stubbed.parse("0.3") == :stubbed_return
+assert stubbed.round(8, 1) == :stubbed_return
+assert stubbed.round(1, 2) == :stubbed_return
+assert stubbed.round(1.2) == 1
+assert stubbed.round(1.324, 2) == 1.32
+assert stubbed.ceil(1.2) == 2
+assert stubbed.ceil(1.2345, 2) == 1.24
+assert stubbed.to_string(2.3) == "2.3"
+```
+
 ## Links
 
 How stubs can be used in TDD for functional languages: [https://www.infoq.com/presentations/mock-fsharp-tdd](https://www.infoq.com/presentations/mock-fsharp-tdd)
@@ -167,7 +190,7 @@ Mark Seemann's [blog post](http://blog.ploeh.dk/2013/10/23/mocks-for-commands-st
 
 * Metadata. Record information about calls
 * Behaviour aware stubs
-* Auto-stub modules: Defer to the original functionality
+* <del>Auto-stub modules: Defer to the original functionality</del>
 
 ## Installation
 
