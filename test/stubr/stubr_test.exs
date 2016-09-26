@@ -14,99 +14,99 @@ defmodule StubrTest do
     end
   end
 
-  test "It can create a stub with a function that matches a pattern" do
-    stubbed = Stubr.stub!([{:good_bye, fn(1, 4) -> :canned_response end}])
+  test "create a stub with a function that matches a pattern" do
+    stubbed = Stubr.stub!([{:foo, fn(1, 4) -> :canned_response end}])
 
-    assert stubbed.module_info[:exports][:good_bye] == 2
-    assert stubbed.good_bye(1, 4) == :canned_response
+    assert stubbed.module_info[:exports][:foo] == 2
+    assert stubbed.foo(1, 4) == :canned_response
   end
 
-  test "It can create a stub with a function that matches multiple patterns" do
+  test "create a stub with a function that matches multiple patterns" do
     stubbed = Stubr.stub!([
-      {:good_bye, fn(1, 4, 9) -> :canned_response end},
-      {:good_bye, fn(1, :ok, 1) -> :other_canned_response end},
-      {:good_bye, fn([1, _, :ok], %{2 => [a: "b"]}, true) -> {:ok} end},
-      {:good_bye, fn(x, y, z) -> x + y + z end}
+      {:foo, fn(1, 4, 9) -> :canned_response end},
+      {:foo, fn(1, :ok, 1) -> :other_canned_response end},
+      {:foo, fn([1, _, :ok], %{2 => [a: "b"]}, true) -> {:ok} end},
+      {:foo, fn(x, y, z) -> x + y + z end}
     ])
 
-    assert stubbed.module_info[:exports][:good_bye] == 3
-    assert stubbed.good_bye(1, 4, 9) == :canned_response
-    assert stubbed.good_bye(1, :ok, 1) == :other_canned_response
-    assert stubbed.good_bye([1, 2,:ok], %{2 => [a: "b"]}, true) == {:ok}
-    assert stubbed.good_bye(1, 2, 3) == 6
+    assert stubbed.module_info[:exports][:foo] == 3
+    assert stubbed.foo(1, 4, 9) == :canned_response
+    assert stubbed.foo(1, :ok, 1) == :other_canned_response
+    assert stubbed.foo([1, 2,:ok], %{2 => [a: "b"]}, true) == {:ok}
+    assert stubbed.foo(1, 2, 3) == 6
   end
 
-  test "It can create a stub with more than one function" do
+  test "create a stub with more than one function" do
     stubbed = Stubr.stub!([
-      {:good_bye, fn(1, 4, 9) -> :canned_response end},
-      {:au_revoir, fn(1, :ok, 1) -> :other_canned_response end},
-      {:hello, fn([1, 2, :ok], %{2 => [a: "b"]}, true) -> {:ok} end},
-      {:bonjour, fn(x, 3, z) -> [x, :ok, x*z] end},
-      {:bonjour, fn(x, y, z) -> x + y + z end}
+      {:foo, fn(1, 4, 9) -> :canned_response end},
+      {:bar, fn(1, :ok, 1) -> :other_canned_response end},
+      {:baz, fn([1, 2, :ok], %{2 => [a: "b"]}, true) -> {:ok} end},
+      {:qux, fn(x, 3, z) -> [x, :ok, x*z] end},
+      {:qux, fn(x, y, z) -> x + y + z end}
     ])
 
-    assert stubbed.module_info[:exports][:good_bye] == 3
-    assert stubbed.good_bye(1, 4, 9) == :canned_response
-    assert stubbed.au_revoir(1, :ok, 1) == :other_canned_response
-    assert stubbed.hello([1, 2,:ok], %{2 => [a: "b"]}, true) == {:ok}
-    assert stubbed.bonjour(2, 3, 3) == [2, :ok, 6]
-    assert stubbed.bonjour(1, 2, 3) == 6
+    assert stubbed.module_info[:exports][:foo] == 3
+    assert stubbed.foo(1, 4, 9) == :canned_response
+    assert stubbed.bar(1, :ok, 1) == :other_canned_response
+    assert stubbed.baz([1, 2,:ok], %{2 => [a: "b"]}, true) == {:ok}
+    assert stubbed.qux(2, 3, 3) == [2, :ok, 6]
+    assert stubbed.qux(1, 2, 3) == 6
   end
 
   test "If no patterns match, then it throws a FunctionClauseError" do
     stubbed = Stubr.stub!([
-      {:good_bye, fn(1, 4, 9) -> :canned_response end}
+      {:foo, fn(1, 4, 9) -> :canned_response end}
     ])
 
     assert_raise FunctionClauseError, fn ->
-      stubbed.good_bye(1, 1, 1)
+      stubbed.foo(1, 1, 1)
     end
   end
 
   test "If a function is not provided, then it throws an UndefinedFunctionError if called" do
     stubbed = Stubr.stub!([
-      {:good_bye, fn(1, 4, 9) -> :three_params end}
+      {:foo, fn(1, 4, 9) -> :three_params end}
     ])
 
     assert_raise UndefinedFunctionError, fn ->
-      stubbed.bonjour(1, 4, 8)
+      stubbed.qux(1, 4, 8)
     end
   end
 
-  test "It can stub an overloaded function" do
+  test "stub an overloaded function" do
     stubbed = Stubr.stub!([
-      {:good_bye, fn(1, 4, 9) -> :three_params end},
-      {:good_bye, fn(1, 4) -> :two_params end},
-      {:good_bye, fn(1, 4, 9, 7) -> :four_params end},
+      {:foo, fn(1, 4, 9) -> :three_params end},
+      {:foo, fn(1, 4) -> :two_params end},
+      {:foo, fn(1, 4, 9, 7) -> :four_params end},
     ])
 
-    assert stubbed.good_bye(1, 4, 9) == :three_params
-    assert stubbed.good_bye(1, 4) == :two_params
-    assert stubbed.good_bye(1, 4, 9, 7) == :four_params
+    assert stubbed.foo(1, 4, 9) == :three_params
+    assert stubbed.foo(1, 4) == :two_params
+    assert stubbed.foo(1, 4, 9, 7) == :four_params
   end
 
   test "If there is no function to overload, then it throws an UndefinedFunctionError" do
     stubbed = Stubr.stub!([
-      {:good_bye, fn(1, 4, 9) -> :three_params end},
-      {:good_bye, fn(1, 4) -> :two_params end},
-      {:good_bye, fn(1, 4, 9, 7) -> :four_params end},
+      {:foo, fn(1, 4, 9) -> :three_params end},
+      {:foo, fn(1, 4) -> :two_params end},
+      {:foo, fn(1, 4, 9, 7) -> :four_params end},
     ])
 
     assert_raise UndefinedFunctionError, fn ->
-      stubbed.good_bye(1, 1, 1, 1, 1)
+      stubbed.foo(1, 1, 1, 1, 1)
     end
   end
 
-  test "It can create a stub by passing in arguments as variables" do
-    function_name = :good_bye
+  test "create a stub by passing in arguments as variables" do
+    function_name = :foo
     function_impl = fn(x, y, z) -> x + y - z end
 
     stubbed = Stubr.stub!([{function_name, function_impl}])
 
-    assert stubbed.good_bye(1, 2, 3) == 0
+    assert stubbed.foo(1, 2, 3) == 0
   end
 
-  test "It can create a stub if the function is defined in another module" do
+  test "create a stub if the function is defined in another module" do
     defmodule Test, do: def test(1, 2), do: :ok
 
     stubbed = Stubr.stub!([{:test, &Test.test/2}])
@@ -114,7 +114,7 @@ defmodule StubrTest do
     assert stubbed.test(1, 2) == :ok
   end
 
-  test "It can stub a dependency" do
+  test "stub a dependency" do
     stubbed = Stubr.stub!([{:foo, fn(1, 2) -> :ok end}])
 
     assert HasDependency.bar(stubbed) == :ok
@@ -148,7 +148,7 @@ defmodule StubrTest do
     assert stubbed.foo(4, 2) == :ok
   end
 
-  test "It defers to the original functionality of the stubbed module if auto stub is true" do
+  test "defers to the original functionality of the stubbed module if auto stub is true" do
     stubbed = Stubr.stub!(Float, [
       {:ceil, fn 0.8 -> :stubbed_return end},
       {:parse, fn _ -> :stubbed_return end},
@@ -167,7 +167,7 @@ defmodule StubrTest do
     assert stubbed.to_string(2.3) == "2.3"
   end
 
-  test "It does not defer to the original functionality of the stubbed module if auto stub is false" do
+  test "does not defer to the original functionality of the stubbed module if auto stub is false" do
     stubbed = Stubr.stub!(Float, [
       {:ceil, fn 0.8 -> :stubbed_return end},
       {:parse, fn _ -> :stubbed_return end},
@@ -185,7 +185,7 @@ defmodule StubrTest do
     end
   end
 
-  test "It does not defer to the original functionality of the stubbed module if auto stub is not set" do
+  test "does not defer to the original functionality of the stubbed module if auto stub is not set" do
     stubbed = Stubr.stub!(Float, [
       {:ceil, fn 0.8 -> :stubbed_return end},
       {:parse, fn _ -> :stubbed_return end},
