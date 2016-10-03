@@ -196,15 +196,15 @@ stubbed = Stubr.stub!(Float, [
   {:round, fn(1, 2) -> :stubbed_return end}
 ], auto_stub: true)
 
-assert stubbed.ceil(0.8) == :stubbed_return
-assert stubbed.parse("0.3") == :stubbed_return
-assert stubbed.round(8, 1) == :stubbed_return
-assert stubbed.round(1, 2) == :stubbed_return
-assert stubbed.round(1.2) == 1
-assert stubbed.round(1.324, 2) == 1.32
-assert stubbed.ceil(1.2) == 2
-assert stubbed.ceil(1.2345, 2) == 1.24
-assert stubbed.to_string(2.3) == "2.3"
+stubbed.ceil(0.8)
+stubbed.parse("0.3")
+stubbed.round(8, 1)
+stubbed.round(1, 2)
+stubbed.round(1.2)
+stubbed.round(1.324, 2)
+stubbed.ceil(1.2)
+stubbed.ceil(1.2345, 2)
+stubbed.to_string(2.3)
 
 assert stubbed.__stubr__(call_info: :ceil) == [
   %{arguments: [0.8], output: :stubbed_return},
