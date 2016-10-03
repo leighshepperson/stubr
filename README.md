@@ -180,6 +180,54 @@ assert stubbed.ceil(1.2345, 2) == 1.24
 assert stubbed.to_string(2.3) == "2.3"
 ```
 
+## Example - Call Information
+
+Stubr records information about function calls. In particular, the inputs and outputs of a function are recorded in the order that the function is called.
+
+Each stubbed module has a function called `__stubr__` and this is used to get information about the stub. 
+
+For example, to get information about a particular function call, you can call the `__stubr__` function like so:
+
+```elixir
+stubbed = Stubr.stub!(Float, [
+  {:ceil, fn 0.8 -> :stubbed_return end},
+  {:parse, fn _ -> :stubbed_return end},
+  {:round, fn(_, 1) -> :stubbed_return end},
+  {:round, fn(1, 2) -> :stubbed_return end}
+], auto_stub: true)
+
+assert stubbed.ceil(0.8) == :stubbed_return
+assert stubbed.parse("0.3") == :stubbed_return
+assert stubbed.round(8, 1) == :stubbed_return
+assert stubbed.round(1, 2) == :stubbed_return
+assert stubbed.round(1.2) == 1
+assert stubbed.round(1.324, 2) == 1.32
+assert stubbed.ceil(1.2) == 2
+assert stubbed.ceil(1.2345, 2) == 1.24
+assert stubbed.to_string(2.3) == "2.3"
+
+assert stubbed.__stubr__(call_info: :ceil) == [
+  %{arguments: [0.8], output: :stubbed_return},
+  %{arguments: [1.2], output: 2.0},
+  %{arguments: [1.2345, 2], output: 1.24}
+]
+
+assert stubbed.__stubr__(call_info: :parse) == [
+  %{arguments: ["0.3"], output: :stubbed_return}
+]
+
+assert stubbed.__stubr__(call_info: :round) == [
+  %{arguments: [8, 1], output: :stubbed_return},
+  %{arguments: [1, 2], output: :stubbed_return},
+  %{arguments: [1.2], output: 1.0},
+  %{arguments: [1.324, 2], output: 1.32}
+]
+
+assert stubbed.__stubr__(call_info: :to_string) == [
+  %{arguments: [2.3], output: "2.3"}
+]
+```
+
 ## Links
 
 How stubs can be used in TDD for functional languages: [https://www.infoq.com/presentations/mock-fsharp-tdd](https://www.infoq.com/presentations/mock-fsharp-tdd)
@@ -188,7 +236,7 @@ Mark Seemann's [blog post](http://blog.ploeh.dk/2013/10/23/mocks-for-commands-st
 
 ## Roadmap
 
-* Metadata. Record information about calls
+* <del>Metadata. Record information about calls</del>
 * Behaviour aware stubs
 * <del>Auto-stub modules: Defer to the original functionality</del>
 
@@ -200,7 +248,7 @@ Stubr is [available in Hex](https://hex.pm/packages/stubr), the package can be i
 
     ```elixir
     def deps do
-      [{:stubr, "~> 1.1.0"}]
+      [{:stubr, "~> 1.2.0"}]
     end
     ```
 

@@ -1,5 +1,5 @@
 defmodule Stubr do
-  alias Stubr.ModuleRegister
+  alias Stubr.ModuleStore
   alias Stubr.ModuleSimulator
 
   @moduledoc """
@@ -83,12 +83,20 @@ defmodule Stubr do
     create_module(module, module_implementation, auto_stub)
   end
 
-  defp create_module(module, module_implementation, auto_stub) do
-    {:ok, pid} = ModuleRegister.start_link
+  defp create_module(module, module_implementation, true) do
+    create_module(module, module_implementation)
+  end
 
-    :ok = register(pid, module, module_implementation, auto_stub)
+  defp create_module(_, module_implementation, _) do
+    create_module(nil, module_implementation)
+  end
 
-    body = create_body(pid, get_args(module, module_implementation, auto_stub))
+  defp create_module(module, module_implementation) do
+    {:ok, pid} = ModuleStore.start_link
+
+    :ok = ModuleStore.set(pid, %{module: module, module_implementation: module_implementation})
+
+    body = create_body(pid, get_args(module, module_implementation))
 
     module_name = create_module_name()
 
@@ -99,6 +107,10 @@ defmodule Stubr do
 
   defp create_body(pid, args) do
     quote bind_quoted: [args: Macro.escape(args), pid: pid] do
+      def __stubr__(call_info: call_info) do
+        ModuleStore.get_call_info(unquote(pid), call_info)
+      end
+
       for {name, args} <- args do
         def unquote(name)(unquote_splicing(args)) do
           ModuleSimulator.eval_function!(unquote(pid), {unquote(name), binding()})
@@ -115,19 +127,6 @@ defmodule Stubr do
     |> String.capitalize
   end
 
-  defp register(pid, module, module_implementation, true) do
-    ModuleRegister.set_module(pid, %{module: module})
-    register(pid, module_implementation)
-  end
-
-  defp register(pid, _, module_implementation, _) do
-    register(pid, module_implementation)
-  end
-
-  defp register(pid, module_implementation) do
-    ModuleRegister.set_module_implementation(pid, %{module_implementation: module_implementation})
-  end
-
   defp can_stub?(nil, _) do
     true
   end
@@ -139,15 +138,15 @@ defmodule Stubr do
     MapSet.union(module_arities, function_impl_arities) == module_arities
   end
 
-  defp get_args(module, _, true) do
-    for {name, arity} <- module.__info__(:functions) do
-      {name, create_args(arity)}
+  defp get_args(nil, module_implementation) do
+    for {name, function_impl} <- module_implementation do
+      {name, create_args(:erlang.fun_info(function_impl)[:arity])}
     end
   end
 
-  defp get_args(_, module_implementation, _) do
-    for {name, function_impl} <- module_implementation do
-      {name, create_args(:erlang.fun_info(function_impl)[:arity])}
+  defp get_args(module, _) do
+    for {name, arity} <- module.__info__(:functions) do
+      {name, create_args(arity)}
     end
   end
 
