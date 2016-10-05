@@ -1,4 +1,4 @@
-defmodule Stubr do
+defmodule Stubrr do
   alias Stubr.ModuleStore
   alias Stubr.ModuleSimulator
 
