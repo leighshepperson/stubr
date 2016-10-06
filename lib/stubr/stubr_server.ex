@@ -46,7 +46,7 @@ defmodule StubrServer do
   def handle_call({:get_call_info, function_name}, _, state) do
     result = state.call_info |> Keyword.get(function_name)
 
-    {:reply, result, state}
+    {:reply, {:ok, result}, state}
   end
 
   def handle_cast({:add_function, {function_name, implementation}}, state) do

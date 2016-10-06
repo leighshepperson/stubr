@@ -58,7 +58,8 @@ defmodule Stubr do
   defp create_body(pid, args_for_functions) do
     quote bind_quoted: [args_for_functions: Macro.escape(args_for_functions), pid: pid] do
       def __stubr__(call_info: function_name) do
-        StubrServer.get(unquote(pid), :call_info, function_name)
+        {:ok, call_info} = StubrServer.get(unquote(pid), :call_info, function_name)
+        call_info
       end
 
       for {function_name, args_for_function} <- args_for_functions do
