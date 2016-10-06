@@ -13,12 +13,20 @@ defmodule StubrServer do
     GenServer.cast(pid, {:add_function, {function_name, implementation}})
   end
 
+  def add(pid, :call_info, {function_name, %{input: input, output: output}}) do
+    GenServer.cast(pid, {:add_call_info, {function_name, %{input: input, output: output}}})
+  end
+
   def set(pid, :module, module) do
     GenServer.cast(pid, {:set_module, module})
   end
 
+  def get(pid, :call_info, function_name) do
+    GenServer.call(pid, {:get_call_info, function_name})
+  end
+
   def init(:ok) do
-    {:ok, %{functions: [], module: nil}}
+    {:ok, %{functions: [], module: nil, call_info: []}}
   end
 
   def handle_call({:invoke, function_name, arguments}, _, %{module: nil} = state) do
@@ -35,12 +43,25 @@ defmodule StubrServer do
     {:reply, result, state}
   end
 
+  def handle_call({:get_call_info, function_name}, _, state) do
+    result = state.call_info |> Keyword.get(function_name)
+
+    {:reply, result, state}
+  end
+
   def handle_cast({:add_function, {function_name, implementation}}, state) do
     {:noreply, %{state | functions: state.functions ++ [{function_name, implementation}]}}
   end
 
   def handle_cast({:set_module, module}, state) do
     {:noreply, %{state | module: module}}
+  end
+
+  def handle_cast({:add_call_info, {function_name, %{input: _, output: _} = function_call_info}}, state) do
+    call_info = state.call_info
+    |> Keyword.update(function_name, [function_call_info], &(&1 ++ [function_call_info]))
+
+    {:noreply, %{state | call_info: call_info}}
   end
 
   defp invoke_function(function_name, arguments, %{functions: functions}) do

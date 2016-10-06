@@ -57,11 +57,19 @@ defmodule Stubr do
 
   defp create_body(pid, args_for_functions) do
     quote bind_quoted: [args_for_functions: Macro.escape(args_for_functions), pid: pid] do
+      def __stubr__(call_info: function_name) do
+        StubrServer.get(unquote(pid), :call_info, function_name)
+      end
+
       for {function_name, args_for_function} <- args_for_functions do
         def unquote(function_name)(unquote_splicing(args_for_function)) do
           variable_values = for {_, variable_value} <- binding, do: variable_value
 
-          case StubrServer.invoke(unquote(pid), {unquote(function_name), variable_values}) do
+          {success_atom, output} = StubrServer.invoke(unquote(pid), {unquote(function_name), variable_values})
+
+          StubrServer.add(unquote(pid), :call_info, {unquote(function_name), %{input: variable_values, output: output}})
+
+          case {success_atom, output} do
             {:ok, result} -> result
             {:error, error} -> raise error
           end

@@ -157,7 +157,7 @@ defmodule StubrTest do
     ], auto_stub: true)
 
     assert stubbed.ceil(0.8) == :stubbed_return
-    assert stubbed.parse("0.3") == :stubbed_return
+    assert stubbed.parse("0z.3") == :stubbed_return
     assert stubbed.round(8, 1) == :stubbed_return
     assert stubbed.round(1, 2) == :stubbed_return
     assert stubbed.round(1.2) == 1
@@ -222,24 +222,24 @@ defmodule StubrTest do
     stubbed.to_string(2.3)
 
     assert stubbed.__stubr__(call_info: :ceil) == [
-      %{arguments: [0.8], output: :stubbed_return},
-      %{arguments: [1.2], output: 2.0},
-      %{arguments: [1.2345, 2], output: 1.24}
+      %{input: [0.8], output: :stubbed_return},
+      %{input: [1.2], output: 2.0},
+      %{input: [1.2345, 2], output: 1.24}
     ]
 
     assert stubbed.__stubr__(call_info: :parse) == [
-      %{arguments: ["0.3"], output: :stubbed_return}
+      %{input: ["0.3"], output: :stubbed_return}
     ]
 
     assert stubbed.__stubr__(call_info: :round) == [
-      %{arguments: [8, 1], output: :stubbed_return},
-      %{arguments: [1, 2], output: :stubbed_return},
-      %{arguments: [1.2], output: 1.0},
-      %{arguments: [1.324, 2], output: 1.32}
+      %{input: [8, 1], output: :stubbed_return},
+      %{input: [1, 2], output: :stubbed_return},
+      %{input: [1.2], output: 1.0},
+      %{input: [1.324, 2], output: 1.32}
     ]
 
     assert stubbed.__stubr__(call_info: :to_string) == [
-      %{arguments: [2.3], output: "2.3"}
+      %{input: [2.3], output: "2.3"}
     ]
   end
 end
