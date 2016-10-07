@@ -1,102 +1,52 @@
 defmodule Stubr do
-  alias Stubr.ModuleStore
-  alias Stubr.ModuleSimulator
 
-  @moduledoc """
-  This module contains functions that create stub modules.
+  def stub!(module, functions, auto_stub: true),
+    do: do_auto_stub!(module, functions)
+  def stub!(module, functions, auto_stub: false),
+    do: do_stub!(module, functions)
+  def stub!(module, functions),
+    do: do_stub!(module, functions)
+  def stub!(functions),
+    do: do_stub!(nil, functions)
 
-  The functions `stub/1` and `stub/2` create new modules based on
-  a list of function representations.
+  defp do_stub!(module, functions) do
+    {:ok} = can_stub!(module, functions)
 
-  The function `stub/2` also accepts a module as an optional
-  first parameter. In this case, it checks whether the function(s)
-  you want to stub exist in that module. Otherwise, it raises an
-  `UndefinedFunctionError`. Additionally, if the auto_stub option
-  is set to true, then it will defer all un-stubbed functions
-  to the original module.
-  """
+    {:ok, pid} = set_up_server(functions)
 
-  @typedoc """
-  Represents a function name
-  """
-  @type function_name :: atom
-
-  @typedoc """
-  Represents a function. The first element is an atom that represents
-  the function name. The second element is an anonymous function that
-  defines the behaviour of the function
-  """
-  @type function_representation :: {function_name, (... -> any)}
-
-  @doc """
-  Creates a stub using a list of function representations.
-
-  The module argument prevents the creation of invalid stubs by
-  checking if the function representations are defined for that
-  module. Otherwise, it returns an `UndefinedFunctionError`.
-
-  If the auto_stub option is set to true, then it will defer all
-  un-stubbed functions to the original module.
-
-  ## Examples
-      iex> Stubr.stub!(String, [{:to_atom, fn ("foo") -> :stubbed end}]).to_atom("foo")
-      :stubbed
-      iex> Stubr.stub!(String, [{:to_atom, fn ("foo") -> :stubbed end}], auto_stub: true).to_atom("bar")
-      :bar
-  """
-  @spec stub!(module, [function_representation], [auto_stub: boolean]) :: module | no_return
-  def stub!(module, module_implementation, auto_stub: auto_stub),
-    do: do_stub!(module, module_implementation, auto_stub)
-
-  @doc """
-  Creates a stub using a list of function representations.
-
-  The module argument prevents the creation of invalid stubs by
-  checking if the function representations are defined for that
-  module. Otherwise, it returns an `UndefinedFunctionError`.
-
-  ## Examples
-      iex> Stubr.stub!(String, [{:to_atom, fn ("foo") -> :stubbed end}]).to_atom("foo")
-      :stubbed
-  """
-  @spec stub!(module, [function_representation]) :: module | no_return
-  def stub!(module, module_implementation),
-    do: do_stub!(module, module_implementation, false)
-
-  @doc """
-  Creates a stub using a list of function representations.
-
-  ## Examples
-      iex> Stubr.stub!([{:to_atom, fn ("foo") -> :stubbed end}]).to_atom("foo")
-      :stubbed
-  """
-  @spec stub!([function_representation]) :: module | no_return
-  def stub!(module_implementation),
-    do: do_stub!(nil, module_implementation, nil)
-
-  defp do_stub!(module, module_implementation, auto_stub) do
-    case can_stub?(module, module_implementation) do
-      true -> :ok
-      false -> raise UndefinedFunctionError
+    args_for_functions = for {function_name, implementation} <- functions do
+      {function_name, create_args(:erlang.fun_info(implementation)[:arity])}
     end
 
-    create_module(module, module_implementation, auto_stub)
+    create_module(pid, args_for_functions)
   end
 
-  defp create_module(module, module_implementation, true) do
-    create_module(module, module_implementation)
+  defp do_auto_stub!(module, functions) do
+    {:ok} = can_stub!(module, functions)
+
+    {:ok, pid} = set_up_server(functions)
+
+    StubrServer.set(pid, :module, module)
+
+    args_for_module_functions = for {function_name, arity} <- module.__info__(:functions) do
+      {function_name, create_args(arity)}
+    end
+
+    create_module(pid, args_for_module_functions)
   end
 
-  defp create_module(_, module_implementation, _) do
-    create_module(nil, module_implementation)
+  defp set_up_server(functions) do
+    {:ok, pid} = StubrServer.start_link
+
+    for {function_name, implementation} <- functions do
+      StubrServer.add(pid, :function, {function_name, implementation})
+    end
+
+    {:ok, pid}
   end
 
-  defp create_module(module, module_implementation) do
-    {:ok, pid} = ModuleStore.start_link
-
-    :ok = ModuleStore.set(pid, %{module: module, module_implementation: module_implementation})
-
-    body = create_body(pid, get_args(module, module_implementation))
+  defp create_module(pid, args_for_functions) do
+    body = create_body(pid, args_for_functions)
 
     module_name = create_module_name()
 
@@ -105,15 +55,26 @@ defmodule Stubr do
     module
   end
 
-  defp create_body(pid, args) do
-    quote bind_quoted: [args: Macro.escape(args), pid: pid] do
-      def __stubr__(call_info: call_info) do
-        ModuleStore.get_call_info(unquote(pid), call_info)
+  defp create_body(pid, args_for_functions) do
+    quote bind_quoted: [args_for_functions: Macro.escape(args_for_functions), pid: pid] do
+
+      def __stubr__(call_info: function_name) do
+        {:ok, call_info} = StubrServer.get(unquote(pid), :call_info, function_name)
+        call_info
       end
 
-      for {name, args} <- args do
-        def unquote(name)(unquote_splicing(args)) do
-          ModuleSimulator.eval_function!(unquote(pid), {unquote(name), binding()})
+      for {function_name, args_for_function} <- args_for_functions do
+        def unquote(function_name)(unquote_splicing(args_for_function)) do
+          variable_values = for {_, variable_value} <- binding, do: variable_value
+
+          {success_atom, output} = StubrServer.invoke(unquote(pid), {unquote(function_name), variable_values})
+
+          StubrServer.add(unquote(pid), :call_info, {unquote(function_name), %{input: variable_values, output: output}})
+
+          case {success_atom, output} do
+            {:ok, result} -> result
+            {:error, error} -> raise error
+          end
         end
       end
     end
@@ -127,36 +88,22 @@ defmodule Stubr do
     |> String.capitalize
   end
 
-  defp can_stub?(nil, _) do
-    true
-  end
-
-  defp can_stub?(module, module_implementation) do
-    module_arities = MapSet.new(module.module_info(:functions))
-    function_impl_arities = MapSet.new(get_arities(module_implementation))
-
-    MapSet.union(module_arities, function_impl_arities) == module_arities
-  end
-
-  defp get_args(nil, module_implementation) do
-    for {name, function_impl} <- module_implementation do
-      {name, create_args(:erlang.fun_info(function_impl)[:arity])}
-    end
-  end
-
-  defp get_args(module, _) do
-    for {name, arity} <- module.__info__(:functions) do
-      {name, create_args(arity)}
-    end
-  end
-
   defp create_args(arity) do
     Enum.map(1..arity, &(Macro.var (:"arg#{&1}"), nil))
   end
 
-  defp get_arities(module_implementation) do
-    for {name, function_impl} <- module_implementation do
-      {name, :erlang.fun_info(function_impl)[:arity]}
+  defp can_stub!(nil, _) do
+    {:ok}
+  end
+
+  defp can_stub!(module, functions) do
+    arities_for_functions = for {function_name, implementation} <- functions do
+      {function_name, :erlang.fun_info(implementation)[:arity]}
+    end
+
+    case (arities_for_functions |> Enum.uniq) -- module.module_info(:functions) do
+      [] -> {:ok}
+      _ -> raise UndefinedFunctionError
     end
   end
 
