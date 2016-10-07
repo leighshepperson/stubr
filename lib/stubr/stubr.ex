@@ -18,7 +18,7 @@ defmodule Stubr do
       {function_name, create_args(:erlang.fun_info(implementation)[:arity])}
     end
 
-    create_module!(pid, args_for_functions)
+    create_module(pid, args_for_functions)
   end
 
   defp do_auto_stub!(module, functions) do
@@ -32,7 +32,7 @@ defmodule Stubr do
       {function_name, create_args(arity)}
     end
 
-    create_module!(pid, args_for_module_functions)
+    create_module(pid, args_for_module_functions)
   end
 
   defp set_up_server(functions) do
@@ -45,7 +45,7 @@ defmodule Stubr do
     {:ok, pid}
   end
 
-  defp create_module!(pid, args_for_functions) do
+  defp create_module(pid, args_for_functions) do
     body = create_body(pid, args_for_functions)
 
     module_name = create_module_name()
@@ -57,6 +57,7 @@ defmodule Stubr do
 
   defp create_body(pid, args_for_functions) do
     quote bind_quoted: [args_for_functions: Macro.escape(args_for_functions), pid: pid] do
+
       def __stubr__(call_info: function_name) do
         {:ok, call_info} = StubrServer.get(unquote(pid), :call_info, function_name)
         call_info
