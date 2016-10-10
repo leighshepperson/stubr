@@ -15,10 +15,6 @@ defmodule StubrTest do
     end
   end
 
-  defmodule MyApp.Twitter.User do
-    defstruct username: ""
-  end
-
   test "create a stub with a function that matches a pattern" do
     stubbed = SUT.stub!([{:foo, fn(1, 4) -> :canned_response end}])
 

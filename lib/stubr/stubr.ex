@@ -1,8 +1,8 @@
 defmodule Stubr do
-  @defaults [auto_stub: false, module: nil]
+  @defaults [auto_stub: false, module: nil, behaviour: nil]
 
   def stub!(functions, opts \\ []) do
-    %{auto_stub: auto_stub, module: module} = @defaults
+    %{auto_stub: auto_stub, module: module, behaviour: behaviour} = @defaults
     |> Keyword.merge(opts)
     |> Enum.into(%{})
 
@@ -11,28 +11,28 @@ defmodule Stubr do
     {:ok, pid} = add_functions_to_server(functions)
 
     if auto_stub do
-      do_auto_stub!(pid, module)
+      do_auto_stub!(pid, module, behaviour)
     else
-      do_stub!(pid, functions)
+      do_stub!(pid, functions, behaviour)
     end
   end
 
-  defp do_stub!(pid, functions) do
+  defp do_stub!(pid, functions, behaviour) do
     args_for_functions = for {function_name, implementation} <- functions do
       {function_name, create_args(:erlang.fun_info(implementation)[:arity])}
     end
 
-    create_module(pid, args_for_functions)
+    create_module(pid, args_for_functions, behaviour)
   end
 
-  defp do_auto_stub!(pid, module) do
+  defp do_auto_stub!(pid, module, behaviour) do
     StubrServer.set(pid, :module, module)
 
     args_for_module_functions = for {function_name, arity} <- module.__info__(:functions) do
       {function_name, create_args(arity)}
     end
 
-    create_module(pid, args_for_module_functions)
+    create_module(pid, args_for_module_functions, behaviour)
   end
 
   defp add_functions_to_server(functions) do
@@ -45,8 +45,8 @@ defmodule Stubr do
     {:ok, pid}
   end
 
-  defp create_module(pid, args_for_functions) do
-    body = create_body(pid, args_for_functions)
+  defp create_module(pid, args_for_functions, behaviour) do
+    body = create_body(pid, args_for_functions, behaviour)
 
     module_name = create_module_name()
 
@@ -55,8 +55,11 @@ defmodule Stubr do
     module
   end
 
-  defp create_body(pid, args_for_functions) do
-    quote bind_quoted: [args_for_functions: Macro.escape(args_for_functions), pid: pid] do
+  defp create_body(pid, args_for_functions, behaviour) do
+    quote bind_quoted: [args_for_functions: Macro.escape(args_for_functions), pid: pid, behaviour: behaviour] do
+      if behaviour != nil do
+        @behaviour behaviour
+      end
 
       def __stubr__(call_info: function_name) do
         {:ok, call_info} = StubrServer.get(unquote(pid), :call_info, function_name)
