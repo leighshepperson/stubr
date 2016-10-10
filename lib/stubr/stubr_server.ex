@@ -78,6 +78,10 @@ defmodule StubrServer do
     end)
   end
 
+  defp defer_on_error(result, _, _, %{module: nil}) do
+    result
+  end
+
   defp defer_on_error({:error, _}, function_name, arguments, %{module: module}) do
     try do
       {:ok, apply(module, function_name, arguments)}
