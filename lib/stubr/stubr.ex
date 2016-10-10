@@ -1,19 +1,23 @@
 defmodule Stubr do
+  @defaults [auto_stub: false, module: nil]
 
-  def stub!(module, functions, auto_stub: true),
-    do: do_auto_stub!(module, functions)
-  def stub!(module, functions, auto_stub: false),
-    do: do_stub!(module, functions)
-  def stub!(module, functions),
-    do: do_stub!(module, functions)
-  def stub!(functions),
-    do: do_stub!(nil, functions)
+  def stub!(functions, opts \\ []) do
+    %{auto_stub: auto_stub, module: module} = @defaults
+    |> Keyword.merge(opts)
+    |> Enum.into(%{})
 
-  defp do_stub!(module, functions) do
     {:ok} = can_stub!(module, functions)
 
-    {:ok, pid} = set_up_server(functions)
+    {:ok, pid} = add_functions_to_server(functions)
 
+    if auto_stub do
+      do_auto_stub!(pid, module)
+    else
+      do_stub!(pid, functions)
+    end
+  end
+
+  defp do_stub!(pid, functions) do
     args_for_functions = for {function_name, implementation} <- functions do
       {function_name, create_args(:erlang.fun_info(implementation)[:arity])}
     end
@@ -21,11 +25,7 @@ defmodule Stubr do
     create_module(pid, args_for_functions)
   end
 
-  defp do_auto_stub!(module, functions) do
-    {:ok} = can_stub!(module, functions)
-
-    {:ok, pid} = set_up_server(functions)
-
+  defp do_auto_stub!(pid, module) do
     StubrServer.set(pid, :module, module)
 
     args_for_module_functions = for {function_name, arity} <- module.__info__(:functions) do
@@ -35,7 +35,7 @@ defmodule Stubr do
     create_module(pid, args_for_module_functions)
   end
 
-  defp set_up_server(functions) do
+  defp add_functions_to_server(functions) do
     {:ok, pid} = StubrServer.start_link
 
     for {function_name, implementation} <- functions do

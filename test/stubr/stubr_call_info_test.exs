@@ -3,12 +3,12 @@ defmodule StubrCallInfoTest do
   alias Stubr, as: SUT
 
   test "gets the call info of a function" do
-    stubbed = SUT.stub!(Float, [
+    stubbed = SUT.stub!([
       {:ceil, fn 0.8 -> :stubbed_return end},
       {:parse, fn _ -> :stubbed_return end},
       {:round, fn(_, 1) -> :stubbed_return end},
       {:round, fn(1, 2) -> :stubbed_return end}
-    ], auto_stub: true)
+    ], module: Float, auto_stub: true)
 
     stubbed.ceil(0.8)
     stubbed.parse("0.3")

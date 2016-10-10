@@ -3,12 +3,12 @@ defmodule StubrAutoStubTest do
   alias Stubr, as: SUT
 
   test "defers to the original functionality of the stubbed module if auto stub is true" do
-    stubbed = SUT.stub!(Float, [
+    stubbed = SUT.stub!([
       {:ceil, fn 0.8 -> :stubbed_return end},
       {:parse, fn _ -> :stubbed_return end},
       {:round, fn(_, 1) -> :stubbed_return end},
       {:round, fn(1, 2) -> :stubbed_return end}
-    ], auto_stub: true)
+    ], module: Float, auto_stub: true)
 
     assert stubbed.ceil(0.8) == :stubbed_return
     assert stubbed.parse("0z.3") == :stubbed_return
@@ -22,12 +22,12 @@ defmodule StubrAutoStubTest do
   end
 
   test "does not defer to the original functionality of the stubbed module if auto stub is false" do
-    stubbed = SUT.stub!(Float, [
+    stubbed = SUT.stub!([
       {:ceil, fn 0.8 -> :stubbed_return end},
       {:parse, fn _ -> :stubbed_return end},
       {:round, fn(_, 1) -> :stubbed_return end},
       {:round, fn(1, 2) -> :stubbed_return end}
-    ], auto_stub: false)
+    ], module: Float, auto_stub: false)
 
     assert stubbed.ceil(0.8) == :stubbed_return
     assert stubbed.parse("0.3") == :stubbed_return
@@ -40,12 +40,12 @@ defmodule StubrAutoStubTest do
   end
 
   test "does not defer to the original functionality of the stubbed module if auto stub is not set" do
-    stubbed = SUT.stub!(Float, [
+    stubbed = SUT.stub!([
       {:ceil, fn 0.8 -> :stubbed_return end},
       {:parse, fn _ -> :stubbed_return end},
       {:round, fn(_, 1) -> :stubbed_return end},
       {:round, fn(1, 2) -> :stubbed_return end}
-    ])
+    ], module: Float)
 
     assert stubbed.ceil(0.8) == :stubbed_return
     assert stubbed.parse("0.3") == :stubbed_return

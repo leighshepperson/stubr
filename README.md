@@ -96,7 +96,7 @@ test "If the call to get a post is successful, then a return post struct with id
       {:get, fn(^post_url) -> {:ok, %HTTPoison.Response{body: canned_body, status_code: 200}} end}
     end
 
-  http_client_stub = Stubr.stub!(HTTPoison, functions)
+  http_client_stub = Stubr.stub!(functions, module: HTTPoison)
 
   for %{id: id, expected: expected} <- @good_test_data do
     assert JSONPlaceHolderAdapter.get_post(id, http_client_stub) == {:ok, expected}
@@ -120,7 +120,7 @@ test "If the response returns an invalid status code, then return error and a me
       {:get, fn(^post_url) -> {:ok, %HTTPoison.Response{status_code: status_code}} end}
     end
 
-  http_client_stub = Stubr.stub!(HTTPoison, functions)
+  http_client_stub = Stubr.stub!(functions, module: HTTPoison)
 
   for %{id: id} <- @bad_test_data do
     assert JSONPlaceHolderAdapter.get_post(id, http_client_stub) == {:error, "Bad request"}
@@ -130,7 +130,7 @@ end
 test "If attempt to get data was unsuccessful, then return error and a message" do
   bad_response = {:get, fn(_) -> {:error, %HTTPoison.Error{}} end}
 
-  http_client_stub = Stubr.stub!(HTTPoison, [bad_response])
+  http_client_stub = Stubr.stub!([bad_response], module: HTTPoison)
 
   assert JSONPlaceHolderAdapter.get_post(2, http_client_stub) == {:error, "Something went wrong"}
 end
@@ -162,12 +162,12 @@ assert stubbed.gravitational_attraction(5.97e24, 1.99e30, 1.5e11) == 3.523960986
 You can auto-stub modules by setting the `auto_stub` option to true. In this case, if you have not provided a function to stub, it will defer to the original implementation:
 
 ```elixir
-stubbed = Stubr.stub!(Float, [
+stubbed = Stubr.stub!([
   {:ceil, fn 0.8 -> :stubbed_return end},
   {:parse, fn _ -> :stubbed_return end},
   {:round, fn(_, 1) -> :stubbed_return end},
   {:round, fn(1, 2) -> :stubbed_return end}
-], auto_stub: true)
+], module: Float, auto_stub: true)
 
 assert stubbed.ceil(0.8) == :stubbed_return
 assert stubbed.parse("0.3") == :stubbed_return
@@ -189,12 +189,12 @@ Each stubbed module has a function called `__stubr__` and this is used to get in
 For example, to get information about a particular function call, you can call the `__stubr__` function like so:
 
 ```elixir
-stubbed = Stubr.stub!(Float, [
+stubbed = Stubr.stub!([
   {:ceil, fn 0.8 -> :stubbed_return end},
   {:parse, fn _ -> :stubbed_return end},
   {:round, fn(_, 1) -> :stubbed_return end},
   {:round, fn(1, 2) -> :stubbed_return end}
-], auto_stub: true)
+], module: Float, auto_stub: true)
 
 stubbed.ceil(0.8)
 stubbed.parse("0.3")
