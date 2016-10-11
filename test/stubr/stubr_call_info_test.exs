@@ -2,13 +2,13 @@ defmodule StubrCallInfoTest do
   use ExUnit.Case, async: true
   alias Stubr, as: SUT
 
-  test "gets the call info of a function" do
+  test "gets the call info of a function if the call_info option is true" do
     stubbed = SUT.stub!([
       {:ceil, fn 0.8 -> :stubbed_return end},
       {:parse, fn _ -> :stubbed_return end},
       {:round, fn(_, 1) -> :stubbed_return end},
       {:round, fn(1, 2) -> :stubbed_return end}
-    ], module: Float, auto_stub: true)
+    ], module: Float, auto_stub: true, call_info: true)
 
     stubbed.ceil(0.8)
     stubbed.parse("0.3")
@@ -40,5 +40,25 @@ defmodule StubrCallInfoTest do
     assert stubbed.__stubr__(call_info: :to_string) == [
       %{input: [2.3], output: "2.3"}
     ]
+  end
+
+  test "does not get the call info of a function if the call_info option is false" do
+    stubbed = SUT.stub!([
+      {:ceil, fn 0.8 -> :stubbed_return end},
+    ], module: Float, auto_stub: true, call_info: false)
+
+    assert_raise UndefinedFunctionError, fn ->
+      stubbed.__stubr__(call_info: :ceil)
+    end
+  end
+
+  test "does not get the call info of a function if the call_info option is not set" do
+    stubbed = SUT.stub!([
+      {:ceil, fn 0.8 -> :stubbed_return end},
+    ], module: Float, auto_stub: true)
+
+    assert_raise UndefinedFunctionError, fn ->
+      stubbed.__stubr__(call_info: :ceil)
+    end
   end
 end
