@@ -6,15 +6,15 @@ defmodule Stubr do
   a list of function representations.
 
   The function `stub!/2` accepts a list of options as an optional
-  second parameter. The posible options are:
+  second parameter. The possible options are:
 
-  * module - the module to stub. It will raise an `UndefinedFunctionError`
+  * `module` - the module to stub. It will raise an `UndefinedFunctionError`
   if the module does not contain the function you want to stub.
-  * auto_stub - if true, then if the module option is set, then it will defer
+  * `auto_stub` - if true, then if the module option is set, then it will defer
   all non-stubbed functions to the original module.
-  * call_info - if true, then call info will be recorded by Stubr. This is accessed by
-  calling the function `__stubr__(:call_info: function_name).
-  * behaviour - if set, then the stub will throw a compiler warning if it does not
+  * `call_info` - if true, then call info will be recorded by Stubr. This is accessed by
+  calling the function `__stubr__(:call_info: function_name)`.
+  * `behaviour` - if set, then the stub will throw a compiler warning if it does not
   implement the behaviour.
   """
 
@@ -24,8 +24,7 @@ defmodule Stubr do
   @type function_name :: atom
 
   @typedoc """
-  Represents a function. The first element is an atom that represents
-  the function name. The second element is an anonymous function that
+  Represents a function. This is an anonymous function that
   defines the behaviour of the function
   """
   @type function_implementation :: fun

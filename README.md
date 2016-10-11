@@ -290,7 +290,7 @@ Mark Seemann's [blog post](http://blog.ploeh.dk/2013/10/23/mocks-for-commands-st
 ## Roadmap
 
 * <del>Metadata. Record information about calls</del>
-* Behaviour aware stubs
+* <del> Behaviour aware stubs </del>
 * <del>Auto-stub modules: Defer to the original functionality</del>
 
 ## Installation
@@ -301,7 +301,7 @@ Stubr is [available in Hex](https://hex.pm/packages/stubr), the package can be i
 
     ```elixir
     def deps do
-      [{:stubr, "~> 1.2.0"}]
+      [{:stubr, "~> 1.3.0"}]
     end
     ```
 
