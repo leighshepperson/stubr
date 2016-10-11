@@ -273,7 +273,7 @@ defmodule Adapter do
   @behaviour AdapterBehaviour
 
   def get(url), do: #call the internal API
-  def put(url), do: #call the internal API
+  def put(url, data), do: #call the internal API
 end
 ```
 
