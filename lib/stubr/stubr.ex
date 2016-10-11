@@ -1,5 +1,7 @@
 defmodule Stubr do
-  @defaults [auto_stub: false, module: nil, behaviour: nil]
+  @auto_stub Application.get_env(:stubr, :auto_stub) || false
+
+  @defaults [auto_stub: @auto_stub, module: nil, behaviour: nil]
 
   def stub!(functions, opts \\ []) do
     opts = @defaults
