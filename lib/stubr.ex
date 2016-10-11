@@ -1,6 +1,38 @@
 defmodule Stubr do
+  @moduledoc """
+  Contains functions that create stub modules.
+
+  The functions `stub!/1` and `stub!/2` create new modules based on
+  a list of function representations.
+
+  The function `stub!/2` accepts a list of options as an optional
+  second parameter. The posible options are:
+
+  * module - the module to stub. It will raise an `UndefinedFunctionError`
+  if the module does not contain the function you want to stub.
+  * auto_stub - if true, then if the module option is set, then it will defer
+  all non-stubbed functions to the original module.
+  * call_info - if true, then call info will be recorded by Stubr. This is accessed by
+  calling the function `__stubr__(:call_info: function_name).
+  * behaviour - if set, then the stub will throw a compiler warning if it does not
+  implement the behaviour.
+  """
+
+  @typedoc """
+  An atom, representing a function name
+  """
   @type function_name :: atom
+
+  @typedoc """
+  Represents a function. The first element is an atom that represents
+  the function name. The second element is an anonymous function that
+  defines the behaviour of the function
+  """
   @type function_implementation :: fun
+
+  @typedoc """
+  The options that can be passed into the stub! function
+  """
   @type stubr_options :: [auto_stub: boolean, module: module, behaviour: module, call_info: boolean]
 
   @auto_stub Application.get_env(:stubr, :auto_stub) || false
@@ -8,6 +40,15 @@ defmodule Stubr do
 
   @defaults [auto_stub: @auto_stub, module: nil, behaviour: nil, call_info: @call_info]
 
+  @doc """
+  Creates a stub.
+
+  ## Examples
+      iex> function_representations = [{:to_atom, fn ("hello") -> :hello end}]
+      iex> stubbed = Stubr.stub!(function_representations, module: String)
+      iex> stubbed.to_atom("hello")
+      :hello
+  """
   @spec stub!([{function_name, function_implementation}], stubr_options) :: module | no_return
   def stub!(functions, opts \\ []) do
     opts = @defaults
