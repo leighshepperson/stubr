@@ -11,10 +11,20 @@ defmodule StubrBehaviourTest do
     assert capture_io(:stderr, fn ->
       SUT.stub!([{:bar, fn _ -> 4 end}], behaviour: FooBehaviour) end
     ) =~ "warning: undefined behaviour function foo/1"
+  end
 
+  test "returns a warning if the stub does not implement the correct overload" do
     assert capture_io(:stderr, fn ->
       SUT.stub!([{:foo, fn(_, _) -> 4 end}], behaviour: FooBehaviour) end
     ) =~ "warning: undefined behaviour function foo/1"
+  end
+
+  test "returns a warning if the behaviour is undefined" do
+    defmodule NoBehaviour, do: def foo, do: :ok
+
+    assert capture_io(:stderr, fn ->
+      SUT.stub!([{:foo, fn _ -> 4 end}], behaviour: NoBehaviour) end
+    ) =~ "warning: behaviour StubrBehaviourTest.NoBehaviour undefined"
   end
 
   test "succeeds if the stub implements a behaviour" do
