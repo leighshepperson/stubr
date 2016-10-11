@@ -1,7 +1,8 @@
 defmodule Stubr do
   @auto_stub Application.get_env(:stubr, :auto_stub) || false
+  @call_info Application.get_env(:stubr, :call_info) || false
 
-  @defaults [auto_stub: @auto_stub, module: nil, behaviour: nil]
+  @defaults [auto_stub: @auto_stub, module: nil, behaviour: nil, call_info: @call_info]
 
   def stub!(functions, opts \\ []) do
     opts = @defaults
@@ -15,22 +16,22 @@ defmodule Stubr do
     do_stub(pid, functions, opts)
   end
 
-  defp do_stub(pid, _, %{auto_stub: true, module: module, behaviour: behaviour}) do
+  defp do_stub(pid, _, %{auto_stub: true, module: module} = opts) do
     StubrServer.set(pid, :module, module)
 
     args_for_module_functions = for {function_name, arity} <- module.__info__(:functions) do
       {function_name, create_args(arity)}
     end
 
-    create_stub(pid, args_for_module_functions, behaviour)
+    create_stub(pid, args_for_module_functions, opts)
   end
 
-  defp do_stub(pid, functions, %{behaviour: behaviour}) do
+  defp do_stub(pid, functions, opts) do
     args_for_functions = for {function_name, implementation} <- functions do
       {function_name, create_args(:erlang.fun_info(implementation)[:arity])}
     end
 
-    create_stub(pid, args_for_functions, behaviour)
+    create_stub(pid, args_for_functions, opts)
   end
 
   defp add_functions_to_server(functions) do
@@ -43,9 +44,9 @@ defmodule Stubr do
     {:ok, pid}
   end
 
-  defp create_stub(pid, args, behaviour) do
+  defp create_stub(pid, args, opts) do
     pid
-    |> create_body(args, behaviour)
+    |> create_body(args, opts)
     |> create_module
   end
 
@@ -57,13 +58,21 @@ defmodule Stubr do
     module
   end
 
-  defp create_body(pid, args_for_functions, behaviour) do
-    quote bind_quoted: [args_for_functions: Macro.escape(args_for_functions), pid: pid, behaviour: behaviour] do
+  defp create_body(pid, args_for_functions, %{behaviour: behaviour, call_info: call_info}) do
+    quote bind_quoted: [
+      args_for_functions: Macro.escape(args_for_functions),
+      pid: pid,
+      behaviour: behaviour,
+      call_info: call_info
+    ]
+    do
       if behaviour != nil, do: @behaviour behaviour
 
-      def __stubr__(call_info: function_name) do
-        {:ok, call_info} = StubrServer.get(unquote(pid), :call_info, function_name)
-        call_info
+      if call_info do
+        def __stubr__(call_info: function_name) do
+          {:ok, call_info} = StubrServer.get(unquote(pid), :call_info, function_name)
+          call_info
+        end
       end
 
       for {function_name, args_for_function} <- args_for_functions do
