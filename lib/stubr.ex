@@ -1,9 +1,13 @@
 defmodule Stubr do
+  @type function_name :: atom
+  @type function_implementation :: fun
+
   @auto_stub Application.get_env(:stubr, :auto_stub) || false
   @call_info Application.get_env(:stubr, :call_info) || false
 
   @defaults [auto_stub: @auto_stub, module: nil, behaviour: nil, call_info: @call_info]
 
+  @spec stub!([{function_name, function_implementation}], [auto_stub: boolean, module: module, behaviour: module, call_info: boolean]) :: module | no_return
   def stub!(functions, opts \\ []) do
     opts = @defaults
     |> Keyword.merge(opts)
