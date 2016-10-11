@@ -10,29 +10,25 @@ defmodule Stubr do
 
     {:ok, pid} = add_functions_to_server(functions)
 
-    do_stub!(pid, functions, opts)
+    do_stub(pid, functions, opts)
   end
 
-  defp do_stub!(pid, _, %{auto_stub: true, module: module, behaviour: behaviour}) do
+  defp do_stub(pid, _, %{auto_stub: true, module: module, behaviour: behaviour}) do
     StubrServer.set(pid, :module, module)
 
     args_for_module_functions = for {function_name, arity} <- module.__info__(:functions) do
       {function_name, create_args(arity)}
     end
 
-    pid
-    |> create_body(args_for_module_functions, behaviour)
-    |> create_module
+    create_stub(pid, args_for_module_functions, behaviour)
   end
 
-  defp do_stub!(pid, functions, %{behaviour: behaviour}) do
+  defp do_stub(pid, functions, %{behaviour: behaviour}) do
     args_for_functions = for {function_name, implementation} <- functions do
       {function_name, create_args(:erlang.fun_info(implementation)[:arity])}
     end
 
-    pid
-    |> create_body(args_for_functions, behaviour)
-    |> create_module
+    create_stub(pid, args_for_functions, behaviour)
   end
 
   defp add_functions_to_server(functions) do
@@ -43,6 +39,12 @@ defmodule Stubr do
     end
 
     {:ok, pid}
+  end
+
+  defp create_stub(pid, args, behaviour) do
+    pid
+    |> create_body(args, behaviour)
+    |> create_module
   end
 
   defp create_module(body) do
