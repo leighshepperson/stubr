@@ -194,7 +194,7 @@ stubbed = Stubr.stub!([
   {:parse, fn _ -> :stubbed_return end},
   {:round, fn(_, 1) -> :stubbed_return end},
   {:round, fn(1, 2) -> :stubbed_return end}
-], module: Float, auto_stub: true)
+], module: Float, auto_stub: true, call_info: true)
 
 stubbed.ceil(0.8)
 stubbed.parse("0.3")
@@ -227,6 +227,59 @@ assert stubbed.__stubr__(call_info: :to_string) == [
   %{input: [2.3], output: "2.3"}
 ]
 ```
+
+## Example - Behaviours
+
+In [http://blog.plataformatec.com.br/2015/10/mocks-and-explicit-contracts/](http://blog.plataformatec.com.br/2015/10/mocks-and-explicit-contracts/) José Valim writes about finding "proper contracts and proper boundaries between the components" in your system. This is something Stubr can help you with to accomplish a "behaviour first" version of TDD.
+
+For example, let's say you want to call an internal API and you decide to use an adapter to wrap it up. However, you haven't built the adapter yet, so you stub it out as an injected dependency without worrying about the implementation details.
+
+So we might have something like this:
+
+```
+adapter_stub = Stubr.stub([
+  {:get, fn("url") -> {:ok, "result"} end},
+  {:put, fn("url", "data") -> {:ok} end}
+])
+
+# calls the get and put functions on the adapter stub
+foo(adapter_stub)
+```
+
+Immediately, this suggests that the adapter needs a behaviour that looks something like this:
+
+```
+defmodule AdapterBehaviour do
+  @callback get(url :: String.t) :: {:ok, String.t}
+  @callback put(url :: String.t, data :: String.t) :: {:ok}
+end
+```
+
+So we can "clip" this on to the stub using the behaviour option:
+
+```
+adapter_stub = Stubr.stub([
+  {:get, fn("url") -> {:ok, "result"} end},
+  {:put, fn("url", "data") -> {:ok} end}
+], behaviour: AdapterBehaviour)
+```
+
+If the generated stub does not implement the behaviour, then it throws the usual compiler warning.
+
+After we've completed all our tests, we can now implement the adapter and ensure it implements the `AdapterBehaviour`:
+
+```
+defmodule Adapter do
+  @behaviour AdapterBehaviour
+
+  def get(url), do: #call the internal API
+  def put(url), do: #call the internal API
+end
+```
+
+The good thing about this is: 
+
+If you change the `Adapter`, then you should change the `AdapterBehaviour`. Since this will cause a compile time warning for the stub, it will encourage you to fix it, making your stubs and unit tests much less brittle.
 
 ## Links
 
