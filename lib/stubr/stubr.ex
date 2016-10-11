@@ -1,38 +1,34 @@
 defmodule Stubr do
-  @defaults [auto_stub: false, module: nil]
+  @defaults [auto_stub: false, module: nil, behaviour: nil]
 
   def stub!(functions, opts \\ []) do
-    %{auto_stub: auto_stub, module: module} = @defaults
+    opts = @defaults
     |> Keyword.merge(opts)
     |> Enum.into(%{})
 
-    {:ok} = can_stub!(module, functions)
+    {:ok} = can_stub!(functions, opts)
 
     {:ok, pid} = add_functions_to_server(functions)
 
-    if auto_stub do
-      do_auto_stub!(pid, module)
-    else
-      do_stub!(pid, functions)
-    end
+    do_stub(pid, functions, opts)
   end
 
-  defp do_stub!(pid, functions) do
-    args_for_functions = for {function_name, implementation} <- functions do
-      {function_name, create_args(:erlang.fun_info(implementation)[:arity])}
-    end
-
-    create_module(pid, args_for_functions)
-  end
-
-  defp do_auto_stub!(pid, module) do
+  defp do_stub(pid, _, %{auto_stub: true, module: module, behaviour: behaviour}) do
     StubrServer.set(pid, :module, module)
 
     args_for_module_functions = for {function_name, arity} <- module.__info__(:functions) do
       {function_name, create_args(arity)}
     end
 
-    create_module(pid, args_for_module_functions)
+    create_stub(pid, args_for_module_functions, behaviour)
+  end
+
+  defp do_stub(pid, functions, %{behaviour: behaviour}) do
+    args_for_functions = for {function_name, implementation} <- functions do
+      {function_name, create_args(:erlang.fun_info(implementation)[:arity])}
+    end
+
+    create_stub(pid, args_for_functions, behaviour)
   end
 
   defp add_functions_to_server(functions) do
@@ -45,9 +41,13 @@ defmodule Stubr do
     {:ok, pid}
   end
 
-  defp create_module(pid, args_for_functions) do
-    body = create_body(pid, args_for_functions)
+  defp create_stub(pid, args, behaviour) do
+    pid
+    |> create_body(args, behaviour)
+    |> create_module
+  end
 
+  defp create_module(body) do
     module_name = create_module_name()
 
     {_, module, _, _} = Module.create(:"Stubr.#{module_name}", body, Macro.Env.location(__ENV__))
@@ -55,8 +55,9 @@ defmodule Stubr do
     module
   end
 
-  defp create_body(pid, args_for_functions) do
-    quote bind_quoted: [args_for_functions: Macro.escape(args_for_functions), pid: pid] do
+  defp create_body(pid, args_for_functions, behaviour) do
+    quote bind_quoted: [args_for_functions: Macro.escape(args_for_functions), pid: pid, behaviour: behaviour] do
+      if behaviour != nil, do: @behaviour behaviour
 
       def __stubr__(call_info: function_name) do
         {:ok, call_info} = StubrServer.get(unquote(pid), :call_info, function_name)
@@ -92,11 +93,11 @@ defmodule Stubr do
     Enum.map(1..arity, &(Macro.var (:"arg#{&1}"), nil))
   end
 
-  defp can_stub!(nil, _) do
+  defp can_stub!(_, %{module: nil}) do
     {:ok}
   end
 
-  defp can_stub!(module, functions) do
+  defp can_stub!(functions, %{module: module}) do
     arities_for_functions = for {function_name, implementation} <- functions do
       {function_name, :erlang.fun_info(implementation)[:arity]}
     end
