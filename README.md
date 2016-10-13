@@ -143,11 +143,11 @@ Stubr can create stubs with functions of different arity, argument patterns and 
 
 ```elixir
 stubbed = Stubr.stub!([
-  {:gravitational_acceleration, fn(:earth) -> 9.8 end},
-  {:gravitational_acceleration, fn(:mars) -> 3.7 end},
-  {:gravitational_acceleration, fn(:earth, :amsterdam) -> 9.813 end},
-  {:gravitational_acceleration, fn(:earth, :havana) -> 9.788  end},
-  {:gravitational_attraction, fn(m1, m2, r) -> 6.674e-11 * (m1 * m2) / (r * r) end}
+  gravitational_acceleration: fn(:earth) -> 9.8 end,
+  gravitational_acceleration: fn(:mars) -> 3.7 end,
+  gravitational_acceleration: fn(:earth, :amsterdam) -> 9.813 end,
+  gravitational_acceleration: fn(:earth, :havana) -> 9.788  end,
+  gravitational_attraction: fn(m1, m2, r) -> 6.674e-11 * (m1 * m2) / (r * r) end
 ])
 
 assert stubbed.gravitational_acceleration(:earth) == 9.8
@@ -163,10 +163,10 @@ You can auto-stub modules by setting the `auto_stub` option to true. In this cas
 
 ```elixir
 stubbed = Stubr.stub!([
-  {:ceil, fn 0.8 -> :stubbed_return end},
-  {:parse, fn _ -> :stubbed_return end},
-  {:round, fn(_, 1) -> :stubbed_return end},
-  {:round, fn(1, 2) -> :stubbed_return end}
+  ceil: fn 0.8 -> :stubbed_return end,
+  parse: fn _ -> :stubbed_return end,
+  round: fn(_, 1) -> :stubbed_return end,
+  round: fn(1, 2) -> :stubbed_return end
 ], module: Float, auto_stub: true)
 
 assert stubbed.ceil(0.8) == :stubbed_return
@@ -190,10 +190,10 @@ For example, to get information about a particular function call, you can call t
 
 ```elixir
 stubbed = Stubr.stub!([
-  {:ceil, fn 0.8 -> :stubbed_return end},
-  {:parse, fn _ -> :stubbed_return end},
-  {:round, fn(_, 1) -> :stubbed_return end},
-  {:round, fn(1, 2) -> :stubbed_return end}
+  ceil: fn 0.8 -> :stubbed_return end,
+  parse: fn _ -> :stubbed_return end,
+  round: fn(_, 1) -> :stubbed_return end,
+  round: fn(1, 2) -> :stubbed_return end
 ], module: Float, auto_stub: true, call_info: true)
 
 stubbed.ceil(0.8)
@@ -238,8 +238,8 @@ So we might have something like this:
 
 ```
 adapter_stub = Stubr.stub([
-  {:get, fn("url") -> {:ok, "result"} end},
-  {:put, fn("url", "data") -> {:ok} end}
+  get: fn("url") -> {:ok, "result"} end,
+  put: fn("url", "data") -> {:ok} end
 ])
 
 # calls the get and put functions on the adapter stub
@@ -259,8 +259,8 @@ So we can "clip" this on to the stub using the behaviour option:
 
 ```
 adapter_stub = Stubr.stub([
-  {:get, fn("url") -> {:ok, "result"} end},
-  {:put, fn("url", "data") -> {:ok} end}
+  get: fn("url") -> {:ok, "result"} end,
+  put: fn("url", "data") -> {:ok} end
 ], behaviour: AdapterBehaviour)
 ```
 
@@ -277,7 +277,7 @@ defmodule Adapter do
 end
 ```
 
-The good thing about this is: 
+The good thing about this is:
 
 If you change the `Adapter`, then you should change the `AdapterBehaviour`. Since this will cause a compile time warning for the stub, it will encourage you to fix it, making your stubs and unit tests much less brittle.
 

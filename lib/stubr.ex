@@ -18,37 +18,29 @@ defmodule Stubr do
   implement the behaviour.
   """
 
-  @typedoc """
-  An atom, representing a function name
-  """
-  @type function_name :: atom
-
-  @typedoc """
-  Represents a function. This is an anonymous function that
-  defines the behaviour of the function
-  """
-  @type function_implementation :: fun
-
-  @typedoc """
-  The options that can be passed into the stub! function
-  """
-  @type stubr_options :: [auto_stub: boolean, module: module, behaviour: module, call_info: boolean]
-
   @auto_stub Application.get_env(:stubr, :auto_stub) || false
   @call_info Application.get_env(:stubr, :call_info) || false
 
   @defaults [auto_stub: @auto_stub, module: nil, behaviour: nil, call_info: @call_info]
 
-  @doc """
-  Creates a stub.
-
-  ## Examples
-      iex> function_representations = [{:to_atom, fn ("hello") -> :hello end}]
-      iex> stubbed = Stubr.stub!(function_representations, module: String)
-      iex> stubbed.to_atom("hello")
-      :hello
-  """
-  @spec stub!([{function_name, function_implementation}], stubr_options) :: module | no_return
+  # @doc ~S"""
+  # Recieves a keyword list of function names and anonymous functions
+  # where all calls by the stub to a function in this list are replaced
+  # by the invocation of the anonymous function.
+  #
+  # ## Options
+  #   * `:module` - when set, if the module does not contain a function
+  #     defined in the keyword list, then raises an `UndefinedFunctionError`
+  #   * `:auto_stub` - when true and a module has been set, if there
+  #     is not a matching function, then defers to the module.
+  #     (defaults to `false`)
+  #   * `behaviour` - when set, raises a warning if the stub does not
+  #     implement the behaviour
+  #   * `call_info` - when set, if a function is called, records the input
+  #     and the output to the function. Accessed by calling
+  #     `__stubr__(:call_info: :function_name)`
+  #     (defaults to `false`)
+  # """
   def stub!(functions, opts \\ []) do
     opts = @defaults
     |> Keyword.merge(opts)
