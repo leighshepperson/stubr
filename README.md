@@ -299,8 +299,8 @@ Stubr is [available in Hex](https://hex.pm/packages/stubr), the package can be i
 
 Add `stubr` to your list of dependencies in `mix.exs`:
 
-    ```elixir
-    def deps do
-      [{:stubr, "~> 1.3.1", only: :test}]
-    end
-    ```
+```elixir
+def deps do
+  [{:stubr, "~> 1.3.1", only: :test}]
+end
+```
