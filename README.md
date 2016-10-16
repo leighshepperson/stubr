@@ -236,7 +236,7 @@ For example, let's say you want to call an internal API and you decide to use an
 
 So we might have something like this:
 
-```
+```elixir
 adapter_stub = Stubr.stub([
   get: fn("url") -> {:ok, "result"} end,
   put: fn("url", "data") -> {:ok} end
@@ -248,7 +248,7 @@ foo(adapter_stub)
 
 Immediately, this suggests that the adapter needs a behaviour that looks something like this:
 
-```
+```elixir
 defmodule AdapterBehaviour do
   @callback get(url :: String.t) :: {:ok, String.t}
   @callback put(url :: String.t, data :: String.t) :: {:ok}
@@ -257,7 +257,7 @@ end
 
 So we can "clip" this on to the stub using the behaviour option:
 
-```
+```elixir
 adapter_stub = Stubr.stub([
   get: fn("url") -> {:ok, "result"} end,
   put: fn("url", "data") -> {:ok} end
@@ -268,7 +268,7 @@ If the generated stub does not implement the behaviour, then it throws the usual
 
 After we've completed all our tests, we can now implement the adapter and ensure it implements the `AdapterBehaviour`:
 
-```
+```elixir
 defmodule Adapter do
   @behaviour AdapterBehaviour
 
@@ -301,7 +301,7 @@ Stubr is [available in Hex](https://hex.pm/packages/stubr), the package can be i
 
     ```elixir
     def deps do
-      [{:stubr, "~> 1.3.0"}]
+      [{:stubr, "~> 1.3.1", only: :test}]
     end
     ```
 

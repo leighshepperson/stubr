@@ -1,21 +1,33 @@
 defmodule Stubr do
-  @moduledoc """
-  Contains functions that create stub modules.
+  @moduledoc ~S"""
+  Provides module stubs for Elixir.
+  Module stubs can be created using `stub!/1` and `stub!/2`.
+  The input to this function is a keyword list of function names
+  (expressed as atoms) and their implementations:
 
-  The functions `stub!/1` and `stub!/2` create new modules based on
-  a list of function representations.
+      [function_name: (...) -> any()]
 
-  The function `stub!/2` accepts a list of options as an optional
-  second parameter. The possible options are:
+  and an optional keyword list of stub options.
 
-  * `module` - the module to stub. It will raise an `UndefinedFunctionError`
-  if the module does not contain the function you want to stub.
-  * `auto_stub` - if true, then if the module option is set, then it will defer
-  all non-stubbed functions to the original module.
-  * `call_info` - if true, then call info will be recorded by Stubr. This is accessed by
-  calling the function `__stubr__(:call_info: function_name)`.
-  * `behaviour` - if set, then the stub will throw a compiler warning if it does not
-  implement the behaviour.
+  ## Options
+
+  The options available to `stub!/2` are:
+
+    * `:module` - when set, if the module does not contain a function
+      defined in the keyword list, then raises an `UndefinedFunctionError`
+
+    * `:auto_stub` - when true and a module has been set, if there
+      is not a matching function, then defers to the module function
+      (defaults to `false`)
+
+    * `behaviour` - when set, raises a warning if the stub does not
+      implement the behaviour
+
+    * `call_info` - when set, if a function is called, records the input
+      and the output to the function. Accessed by calling
+      `__stubr__(:call_info: :function_name)`
+      (defaults to `false`)
+
   """
 
   @auto_stub Application.get_env(:stubr, :auto_stub) || false
@@ -23,24 +35,38 @@ defmodule Stubr do
 
   @defaults [auto_stub: @auto_stub, module: nil, behaviour: nil, call_info: @call_info]
 
-  # @doc ~S"""
-  # Recieves a keyword list of function names and anonymous functions
-  # where all calls by the stub to a function in this list are replaced
-  # by the invocation of the anonymous function.
-  #
-  # ## Options
-  #   * `:module` - when set, if the module does not contain a function
-  #     defined in the keyword list, then raises an `UndefinedFunctionError`
-  #   * `:auto_stub` - when true and a module has been set, if there
-  #     is not a matching function, then defers to the module.
-  #     (defaults to `false`)
-  #   * `behaviour` - when set, raises a warning if the stub does not
-  #     implement the behaviour
-  #   * `call_info` - when set, if a function is called, records the input
-  #     and the output to the function. Accessed by calling
-  #     `__stubr__(:call_info: :function_name)`
-  #     (defaults to `false`)
-  # """
+  @doc ~S"""
+  Recieves a keyword list of function names and anonymous functions
+  where all calls by the stub to a function in this list are deferred
+  to the invocation of the anonymous function.
+
+  ## Options
+
+    * `:module` - when set, if the module does not contain a function
+      defined in the keyword list, then raises an `UndefinedFunctionError`
+
+    * `:auto_stub` - when true and a module has been set, if there
+      is not a matching function, then defers to the module.
+      (defaults to `false`)
+
+    * `behaviour` - when set, raises a warning if the stub does not
+      implement the behaviour
+
+    * `call_info` - when set, if a function is called, records the input
+      and the output to the function. Accessed by calling
+      `__stubr__(:call_info: :function_name)`
+      (defaults to `false`)
+
+  ## Examples
+
+      iex> uniform_stub = [uniform: fn(_) -> 3 end]
+      iex> rand_stub = Stubr.stub!(uniform_stub, module: :rand)
+      iex> rand_stub.uniform(2)
+      3
+      iex> rand_stub.uniform(4)
+      3
+
+  """
   def stub!(functions, opts \\ []) do
     opts = @defaults
     |> Keyword.merge(opts)

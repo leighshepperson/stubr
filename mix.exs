@@ -3,7 +3,7 @@ defmodule Stubr.Mixfile do
 
   def project do
     [app: :stubr,
-     version: "1.3.0",
+     version: "1.3.1",
      elixir: "~> 1.3",
      description: description(),
      package: package(),
@@ -26,9 +26,7 @@ defmodule Stubr.Mixfile do
 
   defp description do
     """
-    Stubr - a stub-only framework for Elixir. Used to stub
-    modules and provide canned answers during a test. Easy to implement.
-    It is not a Mock framework - Stubr just makes stubs!
+    A stubbing framework for Elixir
     """
   end
 
