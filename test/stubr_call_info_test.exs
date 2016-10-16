@@ -61,4 +61,16 @@ defmodule StubrCallInfoTest do
       stubbed.__stubr__(call_info: :ceil)
     end
   end
+
+  test "returns the call info for a stub" do
+    stubbed = SUT.stub!([
+      {:ceil, fn 0.8 -> :stubbed_return end}
+    ], module: Float, auto_stub: true, call_info: true)
+
+    stubbed.ceil(0.8)
+
+    assert Stubr.call_info!(stubbed, :ceil) == [
+      %{input: [0.8], output: :stubbed_return}
+    ]
+  end
 end

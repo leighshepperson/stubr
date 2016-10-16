@@ -80,6 +80,23 @@ defmodule Stubr do
     do_stub(pid, functions, opts)
   end
 
+  @doc ~S"""
+  Returns the call info of a stubbed module.
+
+  ## Examples
+
+      iex> uniform_stub = [uniform: fn(_) -> 3 end]
+      iex> rand_stub = Stubr.stub!(uniform_stub, module: :rand, call_info: true)
+      iex> rand_stub.uniform(2)
+      3
+      iex> Stubr.call_info!(rand_stub, :uniform)
+      [%{input: [2], output: 3}]
+
+  """
+  def call_info!(stub, function_name) do
+    stub.__stubr__(call_info: function_name)
+  end
+
   defp do_stub(pid, _, %{auto_stub: true, module: module} = opts) do
     StubrServer.set(pid, :module, module)
 
