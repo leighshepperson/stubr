@@ -3,11 +3,12 @@ defmodule Stubr do
   Provides module stubs for Elixir.
   Module stubs can be created using `stub!/1` and `stub!/2`.
   The input to this function is a keyword list of function names
-  (expressed as atoms) and their implementations:
+  (expressed as atoms) and their implementations (expressed as
+  anonymous functions):
 
       [function_name: (...) -> any()]
 
-  and an optional keyword list of stub options.
+  Additionally, takes an optional keyword list to configure the stub.
 
   ## Options
 
