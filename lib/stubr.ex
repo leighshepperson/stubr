@@ -181,6 +181,8 @@ defmodule Stubr do
     |> String.capitalize
   end
 
+  defp create_args(0),
+    do: []
   defp create_args(arity) do
     Enum.map(1..arity, &(Macro.var (:"arg#{&1}"), nil))
   end

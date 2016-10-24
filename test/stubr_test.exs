@@ -15,6 +15,13 @@ defmodule StubrTest do
     end
   end
 
+  test "create a stub with a function that has no arguments" do
+    stubbed = SUT.stub!([foo: fn -> :canned_response end])
+
+    assert stubbed.module_info[:exports][:foo] == 0
+    assert stubbed.foo == :canned_response
+  end
+
   test "create a stub with a function that matches a pattern" do
     stubbed = SUT.stub!([foo: fn(1, 4) -> :canned_response end])
 
