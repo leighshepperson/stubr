@@ -162,7 +162,9 @@ defmodule Stubr do
 
           {success_atom, output} = StubrServer.invoke(unquote(pid), {unquote(function_name), variable_values})
 
-          StubrServer.add(unquote(pid), :call_info, {unquote(function_name), %{input: variable_values, output: output}})
+          if unquote(call_info) do
+            StubrServer.add(unquote(pid), :call_info, {unquote(function_name), %{input: variable_values, output: output}})
+          end
 
           case {success_atom, output} do
             {:ok, result} -> result

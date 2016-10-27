@@ -3,7 +3,7 @@ defmodule Stubr.Mixfile do
 
   def project do
     [app: :stubr,
-     version: "1.3.3",
+     version: "1.3.4",
      elixir: "~> 1.3",
      description: description(),
      package: package(),

@@ -12,7 +12,6 @@ Instead of mocks we should use stubs. Mocking frameworks tend to treat them as i
 So what does Stubr provide:
 
 * Stubr is not a mock framework
-* Stubr is not a macro
 * Stubr provides canned answers to calls made during a test
 * Stubr makes it easy to create stubs
 * Stubr makes sure the module you stub HAS the function you want to stub
@@ -20,126 +19,88 @@ So what does Stubr provide:
 * Stubr works without an explicit module. You set it up how you want
 * Stubr lets you do asynchronous tests
 * Stubr won't redefine your modules!
+* Stubr auto-stubs non-stubbed functions
+* Stubr records call information
 * Stubr has ZERO dependencies
 
-## Example - Adapter for JSON PlaceHolder API
-
-This is a simple JSONPlaceHolderAdapter built using TDD:
+## Example - Random numbers
 
 ```elixir
-defmodule Post do
-  defstruct [:title, :body, :userId, :id]
-end
+describe "stub :rand" do
+  test "can stub :rand.uniform/1" do
+    rand_stub = Stubr.stub!([uniform: fn _ -> 1 end], module: :rand)
 
-defmodule JSONPlaceHolderAdapter do
-  @posts_url "http://jsonplaceholder.typicode.com/posts"
-
-  def get_post(id, http_client \\ HTTPoison) do
-    "#{@posts_url}/#{id}"
-    |> http_client.get
-    |> handle_response
-  end
-
-  defp handle_response({:ok, %HTTPoison.Response{body: body, status_code: 200}}) do
-    post = body
-    |> Poison.decode!(as: %Post{})
-    {:ok, post}
-  end
-
-  defp handle_response({:ok, _}) do
-    {:error, "Bad request"}
-  end
-
-  defp handle_response({:error, _}) do
-    {:error, "Something went wrong"}
+    assert rand_stub.uniform(4) == 1
   end
 end
 
 ```
 
-Note the injected `http_client` argument of `JSONPlaceHolderAdapter.get_post/2` defaults to `HTTPoison`. This is so we can create a stub using Stubr.
-
-Stubr is good for using test data to define stubs. It lets you iterate through test data to create the function representations. For example, if the stub returns a unique string A for userId 1 and a unique string B for userId 2 and something else parses those strings to return X and Y, then you can only expect to get X if and only if the user with userId 1 went through and Y if and only if the user with userId 2 went through.
-
-You can see how this works in the following example:
+## Example - Timex
 
 ```elixir
+describe "stub Timex" do
+  test "can stub Timex.now/0" do
+    fixed_time = Timex.to_datetime({2999, 12, 30})
 
-@post_url "http://jsonplaceholder.typicode.com/posts"
+    timex_stub = Stubr.stub!([now: fn -> fixed_time end], module: Timex)
 
-@good_test_data [
-  %{
-    id: 1,
-    post_url: "#{@post_url}/1",
-    expected: %Post{title: "A title", body: "Some body", userId: 2, id: 1},
-    canned_body: "{\"userId\": 2,\"id\": 1,\"title\": \"A title\",\"body\": \"Some body\"}"
-  },
-  %{
-    id: 2,
-    post_url: "#{@post_url}/2",
-    expected: %Post{title: "Another title", body: "Some other body", userId: 3, id: 2},
-    canned_body: "{\"userId\": 3,\"id\": 2,\"title\": \"Another title\",\"body\": \"Some other body\"}"
-  }
-]
+    assert timex_stub.now == fixed_time
+  end
 
-test "If the call to get a post is successful, then a return post struct with id, userId, body and title" do
+  test "can stub Timex.now/0 and defer to un-stubbed Timex functions" do
+    fixed_time = Timex.to_datetime({2999, 12, 30})
 
-  # Build the function definitions using the test data.
-  # Alternatively, you could store the anonymous functions
-  # with the test data to reduce the amount boilerplate code.
+    timex_stub = Stubr.stub!([now: fn -> fixed_time end], module: Timex, auto_stub: true)
 
-  functions = @good_test_data
-  |> Enum.map fn %{post_url: post_url, canned_body: canned_body} ->
-
-      # Note, the pin operator ^ guarantees it returns the correct response for a particular input
-
-      {:get, fn(^post_url) -> {:ok, %HTTPoison.Response{body: canned_body, status_code: 200}} end}
-    end
-
-  http_client_stub = Stubr.stub!(functions, module: HTTPoison)
-
-  for %{id: id, expected: expected} <- @good_test_data do
-    assert JSONPlaceHolderAdapter.get_post(id, http_client_stub) == {:ok, expected}
+    assert timex_stub.before?(fixed_time, timex_stub.shift(fixed_time, days: 1))
   end
 end
 
 ```
 
-The remaining tests are set up the same way:
+## Example - HTTPoison
 
-```elixir
-@bad_test_data [
-  %{id: 1, post_url: "#{@post_url}/1", status_code: 400},
-  %{id: 2, post_url: "#{@post_url}/2", status_code: 500},
-  %{id: 3, post_url: "#{@post_url}/3", status_code: 503}
-]
+```
+describe "stub HTTPoison" do
+  setup do
+    http_poison_stub = Stubr.stub!([
+      get: fn("www.google.com") -> {:ok, %HTTPoison.Response{body: "search", status_code: 200}} end,
+      get!: fn("www.nasa.com") -> %HTTPoison.Response{body: "space", status_code: 500} end,
+      post: fn("www.nasa.com", "content") -> {:error, %HTTPoison.Error{id: nil, reason: :econnrefused}} end
+    ], module: HTTPoison)
 
-test "If the response returns an invalid status code, then return error and a message" do
-  functions = @bad_test_data
-  |> Enum.map fn %{status_code: status_code, post_url: post_url} ->
-      {:get, fn(^post_url) -> {:ok, %HTTPoison.Response{status_code: status_code}} end}
-    end
-
-  http_client_stub = Stubr.stub!(functions, module: HTTPoison)
-
-  for %{id: id} <- @bad_test_data do
-    assert JSONPlaceHolderAdapter.get_post(id, http_client_stub) == {:error, "Bad request"}
+    [stub: http_poison_stub]
   end
-end
 
-test "If attempt to get data was unsuccessful, then return error and a message" do
-  bad_response = {:get, fn(_) -> {:error, %HTTPoison.Error{}} end}
+  test "can stub HTTPoison.get/1", context do
+    {:ok, response} = context[:stub].get("www.google.com")
 
-  http_client_stub = Stubr.stub!([bad_response], module: HTTPoison)
+    assert response.body == "search"
+    assert response.status_code == 200
+  end
 
-  assert JSONPlaceHolderAdapter.get_post(2, http_client_stub) == {:error, "Something went wrong"}
+  test "can stub HTTPoison.get!/1", context do
+    response = context[:stub].get!("www.nasa.com")
+
+    assert response.body == "space"
+    assert response.status_code == 500
+  end
+
+  test "can stub HTTPoison.post/1", context do
+    {:error, error} = context[:stub].post("www.nasa.com", "content")
+
+    assert error.id == nil
+    assert error.reason == :econnrefused
+  end
+
 end
 
 ```
 
 ## Example - Creating Complex Stubs
 
-Stubr can create stubs with functions of different arity, argument patterns and names:
+Create stubs with functions of different arity, argument patterns and names:
 
 ```elixir
 stubbed = Stubr.stub!([
@@ -159,7 +120,7 @@ assert stubbed.gravitational_attraction(5.97e24, 1.99e30, 1.5e11) == 3.523960986
 
 ## Example - Auto-Stub
 
-You can auto-stub modules by setting the `auto_stub` option to true. In this case, if you have not provided a function to stub, it will defer to the original implementation:
+Auto-stub modules by setting the `auto_stub` option to true. In this case, if you have not provided a function to stub, it will defer to the original implementation:
 
 ```elixir
 stubbed = Stubr.stub!([
@@ -182,11 +143,7 @@ assert stubbed.to_string(2.3) == "2.3"
 
 ## Example - Call Information
 
-Stubr records information about function calls. In particular, the inputs and outputs of a function are recorded in the order that the function is called.
-
-If the `call_info` option is true, then you can use the function `Stubr.call_info!` to get call information about the stub.
-
-For example:
+If the `call_info` option is true, then you can use the function `Stubr.call_info!` to get call information about the stub:
 
 ```elixir
 stubbed = Stubr.stub!([
@@ -237,7 +194,7 @@ For example, let's say you want to call an internal API and you decide to use an
 So we might have something like this:
 
 ```elixir
-adapter_stub = Stubr.stub([
+adapter_stub = Stubr.stub!([
   get: fn("url") -> {:ok, "result"} end,
   put: fn("url", "data") -> {:ok} end
 ])
@@ -258,7 +215,7 @@ end
 So we can "clip" this on to the stub using the behaviour option:
 
 ```elixir
-adapter_stub = Stubr.stub([
+adapter_stub = Stubr.stub!([
   get: fn("url") -> {:ok, "result"} end,
   put: fn("url", "data") -> {:ok} end
 ], behaviour: AdapterBehaviour)
@@ -289,9 +246,10 @@ Mark Seemann's [blog post](http://blog.ploeh.dk/2013/10/23/mocks-for-commands-st
 
 ## Roadmap
 
-* <del>Metadata. Record information about calls</del>
-* <del> Behaviour aware stubs </del>
-* <del>Auto-stub modules: Defer to the original functionality</del>
+* Return different values for different calls of the same function
+* "Was called with" functions
+* "Was called with matching pattern" functions
+* Callbacks
 
 ## Installation
 
@@ -301,6 +259,6 @@ Add `stubr` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
-  [{:stubr, "~> 1.3.3", only: :test}]
+  [{:stubr, "~> 1.3.4", only: :test}]
 end
 ```
