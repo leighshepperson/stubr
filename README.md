@@ -61,7 +61,7 @@ end
 
 ## Example - HTTPoison
 
-```
+```elixir
 describe "stub HTTPoison" do
   setup do
     http_poison_stub = Stubr.stub!([
