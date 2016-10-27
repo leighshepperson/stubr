@@ -244,6 +244,8 @@ How stubs can be used in TDD for functional languages: [https://www.infoq.com/pr
 
 Mark Seemann's [blog post](http://blog.ploeh.dk/2013/10/23/mocks-for-commands-stubs-for-queries/) talks about the difference between Mocks and Stubs in the context of commands and queries.
 
+Examples for Stubr: [Examples](https://github.com/leighshepperson/stubr_examples)
+
 ## Roadmap
 
 * Return different values for different calls of the same function
