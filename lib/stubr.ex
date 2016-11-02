@@ -94,7 +94,126 @@ defmodule Stubr do
 
   """
   def call_info!(stub, function_name) do
-    stub.__stubr__(call_info: function_name)
+    case stub.__stubr__(call_info: function_name) do
+      nil -> []
+      result -> result
+    end
+  end
+
+  @doc ~S"""
+  Returns true if the invocation of the anonymous function returns
+  true when applied to one of the arguments the stub is called with. The
+  `call_info` option must be set to `true`.
+
+  ## Examples
+
+      iex> stubbed_function = [foo: fn(_) -> :ok end]
+      iex> stub = Stubr.stub!(stubbed_function, call_info: true)
+      iex> stub.foo(%{bar: :ok, baz: :error})
+      iex> stub |> Stubr.called_with?(:foo, fn [arg] -> Map.has_key?(arg, :bar) end)
+      true
+      iex> stub |> Stubr.called_with?(:foo, fn [arg] -> arg.baz == :ok end)
+      false
+
+  """
+  def called_with?(stub, function_name, function) when is_function(function) do
+    stub
+    |> call_info!(function_name)
+    |> Enum.any?(fn(%{input: input}) -> do_apply_called_with(function, input) end)
+  end
+
+  @doc ~S"""
+  Returns true if the stubbed function is called with a particular argument. The
+  `call_info` option must be set to `true`.
+
+  ## Examples
+
+      iex> stubbed_function = [foo: fn(_, _) -> :ok end]
+      iex> stub = Stubr.stub!(stubbed_function, call_info: true)
+      iex> stub.foo(:bar, :baz)
+      iex> stub |> Stubr.called_with?(:foo, [:bar, :baz])
+      true
+      iex> stub |> Stubr.called_with?(:foo, [:qux])
+      false
+
+  """
+  def called_with?(stub, function_name, arguments) do
+    stub
+    |> call_info!(function_name)
+    |> Enum.any?(fn(%{input: input}) -> input == arguments end)
+  end
+
+  @doc ~S"""
+  Returns number of times the function was called. The
+  `call_info` option must be set to `true`.
+
+  ## Examples
+
+      iex> stubbed_functions = [foo: fn(_) -> :ok end, foo: fn(_, _) -> :ok end]
+      iex> stub = Stubr.stub!(stubbed_functions, call_info: true)
+      iex> stub.foo(:baz)
+      iex> stub.foo(:baz)
+      iex> stub.foo(:baz, :qux)
+      iex> stub |> Stubr.call_count(:foo)
+      3
+
+  """
+  def call_count(stub, function_name) do
+    stub
+    |> call_info!(function_name)
+    |> Enum.count
+  end
+
+  @doc ~S"""
+  Returns number of times the function was called for a particular
+  arguement. The `call_info` option must be set to `true`.
+
+  ## Examples
+
+      iex> stubbed_functions = [foo: fn(_) -> :ok end, foo: fn(_, _) -> :ok end]
+      iex> stub = Stubr.stub!(stubbed_functions, call_info: true)
+      iex> stub.foo(:baz)
+      iex> stub.foo(:baz)
+      iex> stub.foo(:baz, :qux)
+      iex> stub |> Stubr.call_count(:foo, [:baz])
+      2
+      iex> stub |> Stubr.call_count(:foo, [:baz, :qux])
+      1
+
+  """
+  def call_count(stub, function_name, arguments) do
+    stub
+    |> call_info!(function_name)
+    |> Enum.count(fn(%{input: input}) -> input == arguments end)
+  end
+
+  @doc ~S"""
+  Returns true if the stubbed function was called. The
+  `call_info` option must be set to `true`.
+
+  ## Examples
+
+      iex> stubbed_functions = [foo: fn(_) -> :ok end, bar: fn(_) -> :ok end]
+      iex> stub = Stubr.stub!(stubbed_functions, call_info: true)
+      iex> stub.foo(:baz)
+      iex> stub |> Stubr.called?(:foo)
+      true
+      iex> stub |> Stubr.called?(:bar)
+      false
+
+  """
+  def called?(stub, function_name) do
+    stub
+    |> call_info!(function_name)
+    |> Enum.any?
+  end
+
+  def do_apply_called_with(function, input) do
+    try do
+      function.(input)
+    rescue
+      _ -> false
+    end
   end
 
   defp do_stub(pid, _, %{auto_stub: true, module: module} = opts) do
@@ -144,15 +263,17 @@ defmodule Stubr do
       args_for_functions: Macro.escape(args_for_functions),
       pid: pid,
       behaviour: behaviour,
-      call_info: call_info
+      call_info_option: call_info
     ]
     do
       if behaviour != nil, do: @behaviour behaviour
 
-      if call_info do
-        def __stubr__(call_info: function_name) do
+      def __stubr__(call_info: function_name) do
+        if unquote(call_info_option) do
           {:ok, call_info} = StubrServer.get(unquote(pid), :call_info, function_name)
           call_info
+        else
+          raise StubrError, message: "The call_info option must be set and equal to true"
         end
       end
 
@@ -162,7 +283,7 @@ defmodule Stubr do
 
           {success_atom, output} = StubrServer.invoke(unquote(pid), {unquote(function_name), variable_values})
 
-          if unquote(call_info) do
+          if unquote(call_info_option) do
             StubrServer.add(unquote(pid), :call_info, {unquote(function_name), %{input: variable_values, output: output}})
           end
 

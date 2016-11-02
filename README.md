@@ -26,13 +26,13 @@ So what does Stubr provide:
 ## Example - Random numbers
 
 ```elixir
-describe "stub :rand" do
-  test "can stub :rand.uniform/1" do
-    rand_stub = Stubr.stub!([uniform: fn _ -> 1 end], module: :rand)
+    describe "stub :rand" do
+      test "can stub :rand.uniform/1" do
+        rand_stub = Stubr.stub!([uniform: fn _ -> 1 end], module: :rand)
 
-    assert rand_stub.uniform(4) == 1
-  end
-end
+        assert rand_stub.uniform(4) == 1
+      end
+    end
 
 ```
 
