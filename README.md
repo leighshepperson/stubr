@@ -261,6 +261,6 @@ Add `stubr` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
-  [{:stubr, "~> 1.3.4", only: :test}]
+  [{:stubr, "~> 1.3.5", only: :test}]
 end
 ```
