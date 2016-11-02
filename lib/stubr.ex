@@ -102,7 +102,7 @@ defmodule Stubr do
 
   @doc ~S"""
   Returns true if the invocation of the anonymous function returns
-  true when applied to one of the arguments the stub is called with. The
+  true when applied to the arguments of at least one function call. The
   `call_info` option must be set to `true`.
 
   ## Examples
@@ -110,16 +110,16 @@ defmodule Stubr do
       iex> stubbed_function = [foo: fn(_) -> :ok end]
       iex> stub = Stubr.stub!(stubbed_function, call_info: true)
       iex> stub.foo(%{bar: :ok, baz: :error})
-      iex> stub |> Stubr.called_with?(:foo, fn [arg] -> Map.has_key?(arg, :bar) end)
+      iex> stub |> Stubr.called_match?(:foo, fn [arg] -> Map.has_key?(arg, :bar) end)
       true
-      iex> stub |> Stubr.called_with?(:foo, fn [arg] -> arg.baz == :ok end)
+      iex> stub |> Stubr.called_match?(:foo, fn [arg] -> arg.baz == :ok end)
       false
 
   """
-  def called_with?(stub, function_name, function) when is_function(function) do
+  def called_match?(stub, function_name, match_function) when is_function(match_function) do
     stub
     |> call_info!(function_name)
-    |> Enum.any?(fn(%{input: input}) -> do_apply_called_with(function, input) end)
+    |> Enum.any?(fn(%{input: input}) -> do_apply_called_with(match_function, input) end)
   end
 
   @doc ~S"""
@@ -208,7 +208,7 @@ defmodule Stubr do
     |> Enum.any?
   end
 
-  def do_apply_called_with(function, input) do
+  defp do_apply_called_with(function, input) do
     try do
       function.(input)
     rescue
