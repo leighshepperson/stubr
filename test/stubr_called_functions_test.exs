@@ -64,6 +64,124 @@ defmodule StubrCalledFunctionsTest do
     end
   end
 
+  describe "Stubr.called_once/2" do
+
+     test "returns true if the function was called once" do
+      stub = Stubr.stub!([foo: fn _ -> :ok end], call_info: true)
+      stub.foo(:bar)
+      assert Stubr.called_once?(stub, :foo)
+    end
+
+    test "returns false if the function was not called once" do
+      stub = Stubr.stub!([foo: fn _ -> :ok end], call_info: true)
+      stub.foo(:bar)
+      stub.foo(:bar)
+      refute Stubr.called_once?(stub, :foo)
+    end
+
+    test "returns false if the function was never called" do
+      stub = Stubr.stub!([foo: fn _ -> :ok end], call_info: true)
+      refute Stubr.called_once?(stub, :foo)
+    end
+
+  end
+
+  describe "Stubr.called_twice/2" do
+
+     test "returns true if the function was called twice" do
+      stub = Stubr.stub!([foo: fn _ -> :ok end], call_info: true)
+      stub.foo(:bar)
+      stub.foo(:bar)
+      assert Stubr.called_twice?(stub, :foo)
+    end
+
+    test "returns false if the function was not called twice" do
+      stub = Stubr.stub!([foo: fn _ -> :ok end], call_info: true)
+      stub.foo(:bar)
+      refute Stubr.called_twice?(stub, :foo)
+    end
+
+    test "returns false if the function was never called" do
+      stub = Stubr.stub!([foo: fn _ -> :ok end], call_info: true)
+      refute Stubr.called_twice?(stub, :foo)
+    end
+
+  end
+
+  describe "Stubr.called_thrice/2" do
+
+     test "returns true if the function was called twice" do
+      stub = Stubr.stub!([foo: fn _ -> :ok end], call_info: true)
+      stub.foo(:bar)
+      stub.foo(:bar)
+      stub.foo(:bar)
+      assert Stubr.called_thrice?(stub, :foo)
+    end
+
+    test "returns false if the function was not called twice" do
+      stub = Stubr.stub!([foo: fn _ -> :ok end], call_info: true)
+      stub.foo(:bar)
+      refute Stubr.called_thrice?(stub, :foo)
+    end
+
+    test "returns false if the function was never called" do
+      stub = Stubr.stub!([foo: fn _ -> :ok end], call_info: true)
+      refute Stubr.called_thrice?(stub, :foo)
+    end
+
+  end
+
+  describe "Stubr.first/1" do
+
+     test "returns the first call" do
+      stub = Stubr.stub!([foo: fn _, _ -> :ok end], call_info: true)
+      stub.foo(:bar, :baz)
+      assert Stubr.first_call(stub, :foo) == [:bar, :baz]
+    end
+
+  end
+
+  describe "Stubr.second_call/1" do
+
+     test "returns the second call" do
+      stub = Stubr.stub!([foo: fn _, _ -> :ok end], call_info: true)
+      stub.foo(:bar, :baz)
+      stub.foo(:bar, :qux)
+
+      assert Stubr.second_call(stub, :foo) == [:bar, :qux]
+    end
+
+  end
+
+  describe "Stubr.third_call/1" do
+
+     test "returns the third call" do
+      stub = Stubr.stub!([foo: fn _, _ -> :ok end], call_info: true)
+      stub.foo(:bar, :baz)
+      stub.foo(:bar, :qux)
+      stub.foo(:bar, :quxx)
+
+      assert Stubr.third_call(stub, :foo) == [:bar, :quxx]
+    end
+
+  end
+
+  describe "Stubr.nth_call/1" do
+
+     test "returns the nth call" do
+      stub = Stubr.stub!([foo: fn _, _ -> :ok end], call_info: true)
+      stub.foo(:bar, :baz)
+      stub.foo(:bar, :qux)
+      stub.foo(:bar, :quxx)
+
+      assert Stubr.nth_call(stub, :foo, 1) == [:bar, :baz]
+      assert Stubr.nth_call(stub, :foo, 2) == [:bar, :qux]
+      assert Stubr.nth_call(stub, :foo, 3) == [:bar, :quxx]
+
+    end
+
+  end
+
   describe "Stubr.call_count/2" do
 
     test "returns the number of times a stubbed function was called" do

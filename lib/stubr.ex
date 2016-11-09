@@ -163,6 +163,40 @@ defmodule Stubr do
     |> Enum.count
   end
 
+  def called_once?(stub, function_name) do
+    called_n?(stub, function_name, 1)
+  end
+
+  def called_twice?(stub, function_name) do
+    called_n?(stub, function_name, 2)
+  end
+
+  def called_thrice?(stub, function_name) do
+    called_n?(stub, function_name, 3)
+  end
+
+  defp called_n?(stub, function_name, n) do
+    stub |> call_count(function_name) == n
+  end
+
+  def first_call(stub, function_name) do
+    nth_call(stub, function_name, 1)
+  end
+
+  def second_call(stub, function_name) do
+    nth_call(stub, function_name, 2)
+  end
+
+  def third_call(stub, function_name) do
+    nth_call(stub, function_name, 3)
+  end
+
+  def nth_call(stub, function_name, n) do
+    %{input: input} = stub.__stubr__(call_info: function_name)
+    |> Enum.at(n - 1)
+    input
+  end
+
   @doc ~S"""
   Returns number of times the function was called for a particular
   arguement. The `call_info` option must be set to `true`.
@@ -205,14 +239,6 @@ defmodule Stubr do
     stub
     |> call_info!(function_name)
     |> Enum.any?
-  end
-
-  defp do_apply_called_with(function, input) do
-    try do
-      function.(input)
-    rescue
-      _ -> false
-    end
   end
 
   defp do_stub(pid, _, %{auto_stub: true, module: module} = opts) do
