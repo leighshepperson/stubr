@@ -66,7 +66,7 @@ defmodule StubrCalledFunctionsTest do
 
   describe "Stubr.called_once/2" do
 
-     test "returns true if the function was called once" do
+    test "returns true if the function was called once" do
       stub = Stubr.stub!([foo: fn _ -> :ok end], call_info: true)
       stub.foo(:bar)
       assert Stubr.called_once?(stub, :foo)
@@ -88,7 +88,7 @@ defmodule StubrCalledFunctionsTest do
 
   describe "Stubr.called_twice/2" do
 
-     test "returns true if the function was called twice" do
+    test "returns true if the function was called twice" do
       stub = Stubr.stub!([foo: fn _ -> :ok end], call_info: true)
       stub.foo(:bar)
       stub.foo(:bar)
@@ -110,7 +110,7 @@ defmodule StubrCalledFunctionsTest do
 
   describe "Stubr.called_thrice/2" do
 
-     test "returns true if the function was called twice" do
+    test "returns true if the function was called twice" do
       stub = Stubr.stub!([foo: fn _ -> :ok end], call_info: true)
       stub.foo(:bar)
       stub.foo(:bar)
@@ -133,7 +133,7 @@ defmodule StubrCalledFunctionsTest do
 
   describe "Stubr.first/1" do
 
-     test "returns the first call" do
+    test "returns the first call" do
       stub = Stubr.stub!([foo: fn _, _ -> :ok end], call_info: true)
       stub.foo(:bar, :baz)
       assert Stubr.first_call(stub, :foo) == [:bar, :baz]
@@ -143,7 +143,7 @@ defmodule StubrCalledFunctionsTest do
 
   describe "Stubr.second_call/1" do
 
-     test "returns the second call" do
+    test "returns the second call" do
       stub = Stubr.stub!([foo: fn _, _ -> :ok end], call_info: true)
       stub.foo(:bar, :baz)
       stub.foo(:bar, :qux)
@@ -155,7 +155,7 @@ defmodule StubrCalledFunctionsTest do
 
   describe "Stubr.third_call/1" do
 
-     test "returns the third call" do
+    test "returns the third call" do
       stub = Stubr.stub!([foo: fn _, _ -> :ok end], call_info: true)
       stub.foo(:bar, :baz)
       stub.foo(:bar, :qux)
@@ -168,7 +168,7 @@ defmodule StubrCalledFunctionsTest do
 
   describe "Stubr.nth_call/1" do
 
-     test "returns the nth call" do
+    test "returns the nth call" do
       stub = Stubr.stub!([foo: fn _, _ -> :ok end], call_info: true)
       stub.foo(:bar, :baz)
       stub.foo(:bar, :qux)
@@ -177,6 +177,20 @@ defmodule StubrCalledFunctionsTest do
       assert Stubr.nth_call(stub, :foo, 1) == [:bar, :baz]
       assert Stubr.nth_call(stub, :foo, 2) == [:bar, :qux]
       assert Stubr.nth_call(stub, :foo, 3) == [:bar, :quxx]
+
+    end
+
+  end
+
+  describe "Stubr.last_call/1" do
+
+    test "returns the last call" do
+      stub = Stubr.stub!([foo: fn _, _ -> :ok end], call_info: true)
+      stub.foo(:bar, :baz)
+      stub.foo(:bar, :qux)
+      stub.foo(:bar, :quxx)
+
+      assert Stubr.last_call(stub, :foo) == [:bar, :quxx]
 
     end
 
@@ -224,4 +238,54 @@ defmodule StubrCalledFunctionsTest do
     end
 
   end
+
+  describe "Stubr.called_with_exactly/3" do
+
+    test "returns true if the stubbed function was called with the exact arguments" do
+      stub = Stubr.stub!([foo: fn _, _ -> :ok end], call_info: true)
+      stub.foo(:bar, :baz)
+      stub.foo(:baz, :qux)
+
+      assert Stubr.called_with_exactly?(stub, :foo, [[:bar, :baz], [:baz, :qux]])
+    end
+
+    test "returns false if the stubbed function was not called with the exact arguments" do
+      stub = Stubr.stub!([foo: fn _ -> :ok end], call_info: true)
+      stub.foo(:bar)
+      stub.foo(:bar)
+
+      assert Stubr.called_with_exactly?(stub, :foo, [[:bar], [:bar]])
+    end
+
+  end
+
+  describe "Stubr.returned/3" do
+
+    test "returns true if the stubbed function returns the value at any point" do
+      stub = Stubr.stub!([
+        foo: fn "bar" -> {:ok} end,
+        foo: fn _, _ -> :ok end
+      ], call_info: true)
+
+      stub.foo("bar")
+      stub.foo(:baz, :qux)
+
+      assert Stubr.returned?(stub, :foo, :ok)
+      assert Stubr.returned?(stub, :foo, {:ok})
+    end
+
+    test "returns false if the stubbed function does not return the value at any point" do
+      stub = Stubr.stub!([
+        foo: fn "bar" -> {:ok} end,
+        foo: fn _, _ -> :ok end
+      ], call_info: true)
+
+      stub.foo("bar")
+      stub.foo(:baz, :qux)
+
+      refute Stubr.returned?(stub, :foo, :error)
+    end
+
+  end
+
 end

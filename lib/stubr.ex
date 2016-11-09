@@ -191,10 +191,29 @@ defmodule Stubr do
     nth_call(stub, function_name, 3)
   end
 
+  def last_call(stub, function_name) do
+    number_of_calls = stub.__stubr__(call_info: function_name)
+    |> Enum.count
+
+    nth_call(stub, function_name, number_of_calls)
+  end
+
   def nth_call(stub, function_name, n) do
     %{input: input} = stub.__stubr__(call_info: function_name)
     |> Enum.at(n - 1)
     input
+  end
+
+  def called_with_exactly?(stub, function_name, args) do
+    stub.__stubr__(call_info: function_name)
+    |> Enum.reduce([], fn i, acc -> [i.input | acc] end)
+    |> Enum.reverse
+    == args
+  end
+
+  def returned?(stub, function_name, output) do
+    stub.__stubr__(call_info: function_name)
+    |> Enum.any?(fn i -> i.output == output end)
   end
 
   @doc ~S"""
