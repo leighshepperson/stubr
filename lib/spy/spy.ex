@@ -1,16 +1,23 @@
 defmodule Stubr.Spy do
   @moduledoc ~S"""
-  Provides spy functions for stubs and spies.
+  Provides spies for Elixir.
+
+  The spy functions defined in this module can also be
+  applied to stubs.
+
+  Module spies can be created using `spy!/1`. Creates a
+  spy of the provided module.
 
   """
 
   @doc ~S"""
-  Creates a stub that records call information and defers all
-  function calls to the input module.
+  Creates a spy of the provided module. All function calls
+  are defered to the original module and call information
+  is recorded.
 
   ## Examples
 
-      iex> spy = Spy.spy!(Float)
+      iex> spy = Stubr.Spy.spy!(Float)
       iex> spy.ceil(1.3)
       2.0
       iex> spy.__stubr__(call_info: :ceil)
@@ -18,7 +25,7 @@ defmodule Stubr.Spy do
 
   """
   def spy!(module) do
-    Stubr.stub!([], module: module, call_info: true, auto_stub: true)
+    Stubr.Stub.create_stub!([], module: module, call_info: true, auto_stub: true)
   end
 
   @doc ~S"""
@@ -30,24 +37,24 @@ defmodule Stubr.Spy do
   ## Examples
 
       iex> stubbed_function = [foo: fn(_) -> :ok end]
-      iex> stub = Stubr.stub!(stubbed_function, call_info: true)
+      iex> stub = Stubr.Stub.create_stub!(stubbed_function, call_info: true)
       iex> stub.foo(%{bar: :ok, baz: :error})
-      iex> stub |> Spy.called_where?(:foo, fn [arg] -> Map.has_key?(arg, :bar) end)
+      iex> stub |> Stubr.Spy.called_where?(:foo, fn [arg] -> Map.has_key?(arg, :bar) end)
       true
-      iex> stub |> Spy.called_where?(:foo, fn [arg] -> arg.baz == :ok end)
+      iex> stub |> Stubr.Spy.called_where?(:foo, fn [arg] -> arg.baz == :ok end)
       false
 
-      iex> spy = Spy.spy!(Float)
+      iex> spy = Stubr.Spy.spy!(Float)
       iex> spy.ceil(1.9)
-      iex> spy |> Spy.called_where?(:ceil, fn [arg] -> arg == 1.9 end)
+      iex> spy |> Stubr.Spy.called_where?(:ceil, fn [arg] -> arg == 1.9 end)
       true
-      iex> spy |> Spy.called_where?(:ceil, fn [arg] -> arg == 2.0 end)
+      iex> spy |> Stubr.Spy.called_where?(:ceil, fn [arg] -> arg == 2.0 end)
       false
 
   """
   def called_where?(stub, function_name, fun) do
     stub
-    |> Stubr.call_info!(function_name)
+    |> Stubr.Stub.call_info!(function_name)
     |> Enum.any?(&fun.(&1.input))
   end
 
@@ -59,18 +66,18 @@ defmodule Stubr.Spy do
   ## Examples
 
       iex> stubbed_function = [foo: fn(_, _) -> :ok end]
-      iex> stub = Stubr.stub!(stubbed_function, call_info: true)
+      iex> stub = Stubr.Stub.create_stub!(stubbed_function, call_info: true)
       iex> stub.foo(:bar, :baz)
-      iex> stub |> Spy.called_with?(:foo, [:bar, :baz])
+      iex> stub |> Stubr.Spy.called_with?(:foo, [:bar, :baz])
       true
-      iex> stub |> Spy.called_with?(:foo, [:qux])
+      iex> stub |> Stubr.Spy.called_with?(:foo, [:qux])
       false
 
-      iex> spy = Spy.spy!(Float)
+      iex> spy = Stubr.Spy.spy!(Float)
       iex> spy.floor(7.9)
-      iex> spy |> Spy.called_with?(:floor, [7.9])
+      iex> spy |> Stubr.Spy.called_with?(:floor, [7.9])
       true
-      iex> spy |> Spy.called_with?(:floor, [8])
+      iex> spy |> Stubr.Spy.called_with?(:floor, [8])
       false
 
   """
@@ -87,23 +94,23 @@ defmodule Stubr.Spy do
   ## Examples
 
       iex> stubbed_functions = [foo: fn(_) -> :ok end, foo: fn(_, _) -> :ok end]
-      iex> stub = Stubr.stub!(stubbed_functions, call_info: true)
+      iex> stub = Stubr.Stub.create_stub!(stubbed_functions, call_info: true)
       iex> stub.foo(:baz)
       iex> stub.foo(:baz)
       iex> stub.foo(:baz, :qux)
-      iex> stub |> Spy.call_count(:foo)
+      iex> stub |> Stubr.Spy.call_count(:foo)
       3
 
-      iex> spy = Spy.spy!(Float)
+      iex> spy = Stubr.Spy.spy!(Float)
       iex> spy.ceil(0.2)
       iex> spy.ceil(1.3)
-      iex> spy |> Spy.call_count(:ceil)
+      iex> spy |> Stubr.Spy.call_count(:ceil)
       2
 
   """
   def call_count(stub, function_name) do
     stub
-    |> Stubr.call_info!(function_name)
+    |> Stubr.Stub.call_info!(function_name)
     |> Enum.count
   end
 
@@ -115,21 +122,20 @@ defmodule Stubr.Spy do
   ## Examples
 
       iex> stubbed_functions = [foo: fn(_) -> :ok end, foo: fn(_, _) -> :ok end]
-      iex> stub = Stubr.stub!(stubbed_functions, call_info: true)
+      iex> stub = Stubr.Stub.create_stub!(stubbed_functions, call_info: true)
       iex> stub.foo(:baz)
-      iex> stub |> Spy.called_once?(:foo)
+      iex> stub |> Stubr.Spy.called_once?(:foo)
       true
 
-      iex> spy = Spy.spy!(Float)
+      iex> spy = Stubr.Spy.spy!(Float)
       iex> spy.ceil(0.2)
       iex> spy.ceil(1.3)
-      iex> spy |> Spy.called_once?(:ceil)
+      iex> spy |> Stubr.Spy.called_once?(:ceil)
       false
 
   """
-  def called_once?(stub, function_name) do
-    called_many?(stub, function_name, 1)
-  end
+  def called_once?(stub, function_name),
+    do: called_many?(stub, function_name, 1)
 
   @doc ~S"""
   Returns `true` if the function was called twice.
@@ -139,21 +145,20 @@ defmodule Stubr.Spy do
   ## Examples
 
       iex> stubbed_functions = [foo: fn(_) -> :ok end, foo: fn(_, _) -> :ok end]
-      iex> stub = Stubr.stub!(stubbed_functions, call_info: true)
+      iex> stub = Stubr.Stub.create_stub!(stubbed_functions, call_info: true)
       iex> stub.foo(:baz)
-      iex> stub |> Spy.called_twice?(:foo)
+      iex> stub |> Stubr.Spy.called_twice?(:foo)
       false
 
-      iex> spy = Spy.spy!(Float)
+      iex> spy = Stubr.Spy.spy!(Float)
       iex> spy.ceil(0.2)
       iex> spy.ceil(1.3)
-      iex> spy |> Spy.called_twice?(:ceil)
+      iex> spy |> Stubr.Spy.called_twice?(:ceil)
       true
 
   """
-  def called_twice?(stub, function_name) do
-    called_many?(stub, function_name, 2)
-  end
+  def called_twice?(stub, function_name),
+    do: called_many?(stub, function_name, 2)
 
   @doc ~S"""
   Returns `true` if the function was called three times.
@@ -163,22 +168,21 @@ defmodule Stubr.Spy do
   ## Examples
 
       iex> stubbed_functions = [foo: fn(_) -> :ok end, foo: fn(_, _) -> :ok end]
-      iex> stub = Stubr.stub!(stubbed_functions, call_info: true)
+      iex> stub = Stubr.Stub.create_stub!(stubbed_functions, call_info: true)
       iex> stub.foo(:baz)
-      iex> stub |> Spy.called_thrice?(:foo)
+      iex> stub |> Stubr.Spy.called_thrice?(:foo)
       false
 
-      iex> spy = Spy.spy!(Float)
+      iex> spy = Stubr.Spy.spy!(Float)
       iex> spy.ceil(0.2)
       iex> spy.ceil(1.3)
       iex> spy.ceil(2.4)
-      iex> spy |> Spy.called_thrice?(:ceil)
+      iex> spy |> Stubr.Spy.called_thrice?(:ceil)
       true
 
   """
-  def called_thrice?(stub, function_name) do
-    called_many?(stub, function_name, 3)
-  end
+  def called_thrice?(stub, function_name),
+    do: called_many?(stub, function_name, 3)
 
   @doc ~S"""
   Returns `true` if the function was called n-many times.
@@ -188,22 +192,21 @@ defmodule Stubr.Spy do
   ## Examples
 
       iex> stubbed_functions = [foo: fn(_) -> :ok end, foo: fn(_, _) -> :ok end]
-      iex> stub = Stubr.stub!(stubbed_functions, call_info: true)
+      iex> stub = Stubr.Stub.create_stub!(stubbed_functions, call_info: true)
       iex> stub.foo(:baz)
-      iex> stub |> Spy.called_many?(:foo, 2)
+      iex> stub |> Stubr.Spy.called_many?(:foo, 2)
       false
 
-      iex> spy = Spy.spy!(Float)
+      iex> spy = Stubr.Spy.spy!(Float)
       iex> spy.ceil(0.2)
       iex> spy.ceil(1.3)
       iex> spy.ceil(2.4)
-      iex> spy |> Spy.called_many?(:ceil, 3)
+      iex> spy |> Stubr.Spy.called_many?(:ceil, 3)
       true
 
   """
-  def called_many?(stub, function_name, n) do
-    stub |> call_count(function_name) == n
-  end
+  def called_many?(stub, function_name, n),
+    do: stub |> call_count(function_name) == n
 
   @doc ~S"""
   Returns the first call passed to the function.
@@ -213,16 +216,16 @@ defmodule Stubr.Spy do
   ## Examples
 
       iex> stubbed_functions = [foo: fn(_) -> :ok end, foo: fn(_, _) -> :ok end]
-      iex> stub = Stubr.stub!(stubbed_functions, call_info: true)
+      iex> stub = Stubr.Stub.create_stub!(stubbed_functions, call_info: true)
       iex> stub.foo(:baz)
-      iex> stub |> Spy.first_call(:foo)
+      iex> stub |> Stubr.Spy.first_call(:foo)
       [:baz]
 
-      iex> spy = Spy.spy!(Float)
+      iex> spy = Stubr.Spy.spy!(Float)
       iex> spy.ceil(0.2)
       iex> spy.ceil(1.3)
       iex> spy.ceil(2.4)
-      iex> spy |> Spy.first_call(:ceil)
+      iex> spy |> Stubr.Spy.first_call(:ceil)
       [0.2]
 
   """
@@ -237,17 +240,17 @@ defmodule Stubr.Spy do
   ## Examples
 
       iex> stubbed_functions = [foo: fn(_, _) -> :ok end]
-      iex> stub = Stubr.stub!(stubbed_functions, call_info: true)
+      iex> stub = Stubr.Stub.create_stub!(stubbed_functions, call_info: true)
       iex> stub.foo(:bar, :baz)
       iex> stub.foo(:bar, :qux)
-      iex> stub |> Spy.second_call(:foo)
+      iex> stub |> Stubr.Spy.second_call(:foo)
       [:bar, :qux]
 
-      iex> spy = Spy.spy!(Float)
+      iex> spy = Stubr.Spy.spy!(Float)
       iex> spy.ceil(0.2)
       iex> spy.ceil(1.3)
       iex> spy.ceil(2.4)
-      iex> spy |> Spy.second_call(:ceil)
+      iex> spy |> Stubr.Spy.second_call(:ceil)
       [1.3]
 
   """
@@ -262,18 +265,18 @@ defmodule Stubr.Spy do
   ## Examples
 
       iex> stubbed_functions = [foo: fn(_, _) -> :ok end]
-      iex> stub = Stubr.stub!(stubbed_functions, call_info: true)
+      iex> stub = Stubr.Stub.create_stub!(stubbed_functions, call_info: true)
       iex> stub.foo(1, 2)
       iex> stub.foo(3, 4)
       iex> stub.foo(5, 6)
-      iex> stub |> Spy.third_call(:foo)
+      iex> stub |> Stubr.Spy.third_call(:foo)
       [5, 6]
 
-      iex> spy = Spy.spy!(Float)
+      iex> spy = Stubr.Spy.spy!(Float)
       iex> spy.ceil(0.2)
       iex> spy.ceil(1.3)
       iex> spy.ceil(2.4)
-      iex> spy |> Spy.third_call(:ceil)
+      iex> spy |> Stubr.Spy.third_call(:ceil)
       [2.4]
 
   """
@@ -288,24 +291,24 @@ defmodule Stubr.Spy do
   ## Examples
 
       iex> stubbed_functions = [foo: fn(_, _) -> :ok end]
-      iex> stub = Stubr.stub!(stubbed_functions, call_info: true)
+      iex> stub = Stubr.Stub.create_stub!(stubbed_functions, call_info: true)
       iex> stub.foo(1, 2)
       iex> stub.foo(3, 4)
-      iex> stub |> Spy.last_call(:foo)
+      iex> stub |> Stubr.Spy.last_call(:foo)
       [3, 4]
 
-      iex> spy = Spy.spy!(Float)
+      iex> spy = Stubr.Spy.spy!(Float)
       iex> spy.ceil(0.2)
       iex> spy.ceil(1.3)
       iex> spy.ceil(2.4)
       iex> spy.ceil(4.4)
-      iex> spy |> Spy.last_call(:ceil)
+      iex> spy |> Stubr.Spy.last_call(:ceil)
       [4.4]
 
   """
   def last_call(stub, function_name) do
     number_of_calls = stub
-    |> Stubr.call_info!(function_name)
+    |> Stubr.Stub.call_info!(function_name)
     |> Enum.count
 
     stub
@@ -320,24 +323,24 @@ defmodule Stubr.Spy do
   ## Examples
 
       iex> stubbed_functions = [foo: fn(_, _) -> :ok end]
-      iex> stub = Stubr.stub!(stubbed_functions, call_info: true)
+      iex> stub = Stubr.Stub.create_stub!(stubbed_functions, call_info: true)
       iex> stub.foo(1, 2)
       iex> stub.foo(3, 4)
-      iex> stub |> Spy.get_call(:foo, 2)
+      iex> stub |> Stubr.Spy.get_call(:foo, 2)
       [3, 4]
 
-      iex> spy = Spy.spy!(Float)
+      iex> spy = Stubr.Spy.spy!(Float)
       iex> spy.ceil(0.2)
       iex> spy.ceil(1.3)
       iex> spy.ceil(2.4)
       iex> spy.ceil(4.4)
-      iex> spy |> Spy.get_call(:ceil, 3)
+      iex> spy |> Stubr.Spy.get_call(:ceil, 3)
       [2.4]
 
   """
   def get_call(stub, function_name, n) do
     %{input: input} = stub
-    |> Stubr.call_info!(function_name)
+    |> Stubr.Stub.call_info!(function_name)
     |> Enum.at(n - 1)
 
     input
@@ -351,23 +354,24 @@ defmodule Stubr.Spy do
   ## Examples
 
       iex> stubbed_functions = [foo: fn(_, _) -> :ok end]
-      iex> stub = Stubr.stub!(stubbed_functions, call_info: true)
+      iex> stub = Stubr.Stub.create_stub!(stubbed_functions, call_info: true)
       iex> stub.foo(1, 2)
       iex> stub.foo(3, 4)
-      iex> stub |> Spy.called_with_exactly?(:foo, [[1, 2], [3, 4]])
+      iex> stub |> Stubr.Spy.called_with_exactly?(:foo, [[1, 2], [3, 4]])
       true
 
-      iex> spy = Spy.spy!(Float)
+      iex> spy = Stubr.Spy.spy!(Float)
       iex> spy.ceil(0.2)
       iex> spy.ceil(1.3)
       iex> spy.ceil(2.4)
       iex> spy.ceil(4.4)
-      iex> spy |> Spy.called_with_exactly?(:ceil, [[0.2], [2.3]])
+      iex> spy |> Stubr.Spy.called_with_exactly?(:ceil, [[0.2], [2.3]])
       false
 
   """
   def called_with_exactly?(stub, function_name, args) do
-    stub.__stubr__(call_info: function_name)
+    stub
+    |> Stubr.Stub.call_info!(function_name)
     |> Enum.reduce([], fn i, acc -> [i.input | acc] end)
     |> Enum.reverse
     == args
@@ -382,23 +386,24 @@ defmodule Stubr.Spy do
   ## Examples
 
       iex> stubbed_functions = [foo: fn(_, _) -> :ok end]
-      iex> stub = Stubr.stub!(stubbed_functions, call_info: true)
+      iex> stub = Stubr.Stub.create_stub!(stubbed_functions, call_info: true)
       iex> stub.foo(1, 2)
       iex> stub.foo(3, 4)
-      iex> stub |> Spy.returned?(:foo, :ok)
+      iex> stub |> Stubr.Spy.returned?(:foo, :ok)
       true
 
-      iex> spy = Spy.spy!(Float)
+      iex> spy = Stubr.Spy.spy!(Float)
       iex> spy.ceil(0.2)
       iex> spy.ceil(1.3)
       iex> spy.ceil(2.4)
       iex> spy.ceil(4.4)
-      iex> spy |> Spy.returned?(:ceil, 3.0)
+      iex> spy |> Stubr.Spy.returned?(:ceil, 3.0)
       true
 
   """
   def returned?(stub, function_name, output) do
-    stub.__stubr__(call_info: function_name)
+    stub
+    |> Stubr.Stub.call_info!(function_name)
     |> Enum.any?(fn i -> i.output == output end)
   end
 
@@ -410,27 +415,27 @@ defmodule Stubr.Spy do
   ## Examples
 
       iex> stubbed_functions = [foo: fn(_) -> :ok end, foo: fn(_, _) -> :ok end]
-      iex> stub = Stubr.stub!(stubbed_functions, call_info: true)
+      iex> stub = Stubr.Stub.create_stub!(stubbed_functions, call_info: true)
       iex> stub.foo(:baz)
       iex> stub.foo(:baz)
       iex> stub.foo(:baz, :qux)
-      iex> stub |> Spy.call_count(:foo, [:baz])
+      iex> stub |> Stubr.Spy.call_count(:foo, [:baz])
       2
-      iex> stub |> Spy.call_count(:foo, [:baz, :qux])
+      iex> stub |> Stubr.Spy.call_count(:foo, [:baz, :qux])
       1
 
-      iex> spy = Spy.spy!(Float)
+      iex> spy = Stubr.Spy.spy!(Float)
       iex> spy.ceil(0.2)
       iex> spy.ceil(1.3)
       iex> spy.ceil(1.3)
       iex> spy.ceil(4.4)
-      iex> spy |> Spy.call_count(:ceil, [1.3])
+      iex> spy |> Stubr.Spy.call_count(:ceil, [1.3])
       2
 
   """
   def call_count(stub, function_name, arguments) do
     stub
-    |> Stubr.call_info!(function_name)
+    |> Stubr.Stub.call_info!(function_name)
     |> Enum.count(fn(%{input: input}) -> input == arguments end)
   end
 
@@ -442,24 +447,24 @@ defmodule Stubr.Spy do
   ## Examples
 
       iex> stubbed_functions = [foo: fn(_) -> :ok end, bar: fn(_) -> :ok end]
-      iex> stub = Stubr.stub!(stubbed_functions, call_info: true)
+      iex> stub = Stubr.Stub.create_stub!(stubbed_functions, call_info: true)
       iex> stub.foo(:baz)
-      iex> stub |> Spy.called?(:foo)
+      iex> stub |> Stubr.Spy.called?(:foo)
       true
-      iex> stub |> Spy.called?(:bar)
+      iex> stub |> Stubr.Spy.called?(:bar)
       false
 
-      iex> stub = Spy.spy!(Float)
+      iex> stub = Stubr.Spy.spy!(Float)
       iex> stub.ceil(2.3)
-      iex> stub |> Spy.called?(:ceil)
+      iex> stub |> Stubr.Spy.called?(:ceil)
       true
-      iex> stub |> Spy.called?(:floor)
+      iex> stub |> Stubr.Spy.called?(:floor)
       false
 
   """
   def called?(stub, function_name) do
     stub
-    |> Stubr.call_info!(function_name)
+    |> Stubr.Stub.call_info!(function_name)
     |> Enum.any?
   end
 
