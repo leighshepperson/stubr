@@ -1,11 +1,11 @@
-defmodule Stubr.Stub.AutoStubTest do
+defmodule Stubr.Stub.Options.AutoStubTest do
   use ExUnit.Case, async: true
   alias Stubr.Stub, as: SUT
 
   describe "auto_stub option" do
 
-    test "defers to the original functionality of the stubbed module if auto stub is true" do
-      stubbed = SUT.create_stub!([
+    test "defers to the original functionality of the input module if auto stub is true" do
+      stubbed = SUT.create!([
         ceil: fn 0.8 -> :stubbed_return end,
         parse: fn _ -> :stubbed_return end,
         round: fn(_, 1) -> :stubbed_return end,
@@ -13,7 +13,7 @@ defmodule Stubr.Stub.AutoStubTest do
       ], module: Float, auto_stub: true)
 
       assert stubbed.ceil(0.8) == :stubbed_return
-      assert stubbed.parse("0z.3") == :stubbed_return
+      assert stubbed.parse("0.3") == :stubbed_return
       assert stubbed.round(8, 1) == :stubbed_return
       assert stubbed.round(1, 2) == :stubbed_return
       assert stubbed.round(1.2) == 1
@@ -23,8 +23,8 @@ defmodule Stubr.Stub.AutoStubTest do
       assert stubbed.to_string(2.3) == "2.3"
     end
 
-    test "does not defer to the original functionality of the stubbed module if auto stub is false" do
-      stubbed = SUT.create_stub!([
+    test "does not defer to the original functionality of the input module if auto stub is false" do
+      stubbed = SUT.create!([
         ceil: fn 0.8 -> :stubbed_return end,
         parse: fn _ -> :stubbed_return end,
         round: fn(_, 1) -> :stubbed_return end,
@@ -41,8 +41,8 @@ defmodule Stubr.Stub.AutoStubTest do
       end
     end
 
-    test "does not defer to the original functionality of the stubbed module if auto stub is not set" do
-      stubbed = SUT.create_stub!([
+    test "does not defer to the original functionality of the input module if auto stub is not set" do
+      stubbed = SUT.create!([
         ceil: fn 0.8 -> :stubbed_return end,
         parse: fn _ -> :stubbed_return end,
         round: fn(_, 1) -> :stubbed_return end,

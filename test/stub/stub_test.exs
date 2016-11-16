@@ -3,23 +3,23 @@ defmodule Stubr.StubTest do
   alias Stubr.Stub, as: SUT
   doctest SUT
 
-  describe "Stubr.Stub.create_stub/1" do
+  describe "Stubr.Stub.create!/1" do
     test "create a stub with a function that has no arguments" do
-      stubbed = SUT.create_stub!([foo: fn -> :canned_response end])
+      stubbed = SUT.create!([foo: fn -> :canned_response end])
 
       assert stubbed.module_info[:exports][:foo] == 0
       assert stubbed.foo == :canned_response
     end
 
     test "create a stub with a function that matches a pattern" do
-      stubbed = SUT.create_stub!([foo: fn(1, 4) -> :canned_response end])
+      stubbed = SUT.create!([foo: fn(1, 4) -> :canned_response end])
 
       assert stubbed.module_info[:exports][:foo] == 2
       assert stubbed.foo(1, 4) == :canned_response
     end
 
     test "create a stub with a function that matches multiple patterns" do
-      stubbed = SUT.create_stub!([
+      stubbed = SUT.create!([
         foo: fn(1, 4, 9) -> :canned_response end,
         foo: fn(1, :ok, 1) -> :other_canned_response end,
         foo: fn([1, _, :ok], %{2 => [a: "b"]}, true) -> {:ok} end,
@@ -34,7 +34,7 @@ defmodule Stubr.StubTest do
     end
 
     test "create a stub with more than one function" do
-      stubbed = SUT.create_stub!([
+      stubbed = SUT.create!([
         foo: fn(1, 4, 9) -> :canned_response end,
         bar: fn(1, :ok, 1) -> :other_canned_response end,
         baz: fn([1, 2, :ok], %{2 => [a: "b"]}, true) -> {:ok} end,
@@ -51,7 +51,7 @@ defmodule Stubr.StubTest do
     end
 
     test "if no patterns match, then it throws a FunctionClauseError" do
-      stubbed = SUT.create_stub!([
+      stubbed = SUT.create!([
         foo: fn(1, 4, 9) -> :canned_response end
       ])
 
@@ -61,7 +61,7 @@ defmodule Stubr.StubTest do
     end
 
     test "if a function is not provided, then it throws an UndefinedFunctionError if called" do
-      stubbed = SUT.create_stub!([
+      stubbed = SUT.create!([
         foo: fn(1, 4, 9) -> :three_params end
       ])
 
@@ -71,7 +71,7 @@ defmodule Stubr.StubTest do
     end
 
     test "stub an overloaded function" do
-      stubbed = SUT.create_stub!([
+      stubbed = SUT.create!([
         foo: fn(1, 4, 9) -> :three_params end,
         foo: fn(1, 4) -> :two_params end,
         foo: fn(1, 4, 9, 7) -> :four_params end
@@ -83,7 +83,7 @@ defmodule Stubr.StubTest do
     end
 
     test "if there is no function to overload, then it throws an UndefinedFunctionError" do
-      stubbed = SUT.create_stub!([
+      stubbed = SUT.create!([
         foo: fn(1, 4, 9) -> :three_params end,
         foo: fn(1, 4) -> :two_params end,
         foo: fn(1, 4, 9, 7) -> :four_params end
@@ -98,7 +98,7 @@ defmodule Stubr.StubTest do
       function_name = :foo
       function_impl = fn(x, y, z) -> x + y - z end
 
-      stubbed = SUT.create_stub!([{function_name, function_impl}])
+      stubbed = SUT.create!([{function_name, function_impl}])
 
       assert stubbed.foo(1, 2, 3) == 0
     end
@@ -106,7 +106,7 @@ defmodule Stubr.StubTest do
     test "create a stub if the function is defined in another module" do
       defmodule Test, do: def test(1, 2), do: :ok
 
-      stubbed = SUT.create_stub!([test: &Test.test/2])
+      stubbed = SUT.create!([test: &Test.test/2])
 
       assert stubbed.test(1, 2) == :ok
     end
@@ -121,7 +121,7 @@ defmodule Stubr.StubTest do
         end
       end
 
-      stubbed = SUT.create_stub!([foo: fn(1, 2) -> :ok end])
+      stubbed = SUT.create!([foo: fn(1, 2) -> :ok end])
 
       assert HasDependency.bar(stubbed) == :ok
     end

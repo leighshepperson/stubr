@@ -2,7 +2,7 @@ defmodule Stubr.Stub do
   @moduledoc ~S"""
   Provides stubs for Elixir.
 
-  Module stubs can be created using `create_stub!/1` and `create_stub!/2`.
+  Module stubs can be created using `create!/1` and `create!/2`.
   The input to this function is a keyword list of function names
   (expressed as atoms) and their implementations (expressed as
   anonymous functions):
@@ -13,7 +13,7 @@ defmodule Stubr.Stub do
 
   ## Options
 
-  The options available to `create_stub!/2` are:
+  The options available to `create!/2` are:
 
     * `:module` - when set, if the module does not contain a function
       defined in the keyword list, then raises an `UndefinedFunctionError`
@@ -61,14 +61,14 @@ defmodule Stubr.Stub do
   ## Examples
 
       iex> uniform_stub = [uniform: fn(_) -> 3 end]
-      iex> rand_stub = Stubr.Stub.create_stub!(uniform_stub, module: :rand)
+      iex> rand_stub = Stubr.Stub.create!(uniform_stub, module: :rand)
       iex> rand_stub.uniform(2)
       3
       iex> rand_stub.uniform(4)
       3
 
   """
-  def create_stub!(functions, opts \\ []) do
+  def create!(functions, opts \\ []) do
     opts = @defaults
     |> Keyword.merge(opts)
     |> Enum.into(%{})
@@ -86,7 +86,7 @@ defmodule Stubr.Stub do
   ## Examples
 
       iex> uniform_stub = [uniform: fn(_) -> 3 end]
-      iex> rand_stub = Stubr.Stub.create_stub!(uniform_stub, module: :rand, call_info: true)
+      iex> rand_stub = Stubr.Stub.create!(uniform_stub, module: :rand, call_info: true)
       iex> rand_stub.uniform(2)
       3
       iex> Stubr.Stub.call_info!(rand_stub, :uniform)
