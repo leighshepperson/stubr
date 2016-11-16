@@ -63,23 +63,5 @@ defmodule Stubr.Stub.Options.CallInfoTest do
         stubbed.__stubr__(call_info: :ceil)
       end
     end
-
-    test "returns the call info for the stubbed" do
-      stubbed = SUT.create!([
-        ceil: fn 0.8 -> :stubbed_return end
-      ], module: Float, auto_stub: true, call_info: true)
-
-      stubbed.ceil(0.8)
-
-      assert SUT.call_info!(stubbed, :ceil) == [
-        %{input: [0.8], output: :stubbed_return}
-      ]
-    end
-
-    test "returns empty list if no call info for a stubbed function" do
-      stubbed = SUT.create!([foo: fn _ -> :ok end], call_info: true)
-
-      assert SUT.call_info!(stubbed, :ceil) == []
-    end
   end
 end

@@ -3,19 +3,48 @@ defmodule StubrTest do
   alias Stubr, as: SUT
   doctest SUT
 
-  describe "Stubr.spy!/2" do
+  describe "Stubr.stub!/2" do
+    test "creates a stub" do
+      stubbed = SUT.stub!([ceil: fn 1.9 -> :ok end])
+      assert stubbed.ceil(1.9) == :ok
+    end
 
+    test "creates a stub with options" do
+      stubbed = SUT.stub!([ceil: fn 1.9 -> :ok end], call_info: true, module: Float, auto_stub: true)
+      assert stubbed.ceil(1.9) == :ok
+      assert stubbed.floor(1.4) == 1.0
+      assert stubbed.__stubr__(call_info: :ceil) == [%{input: [1.9], output: :ok}]
+    end
+  end
+
+  describe "Stubr.spy!/2" do
     test "creates a stub of a module with call info and auto stub options set to true" do
       spy = SUT.spy!(Float)
-
       assert spy.ceil(1.9) == 2.0
       assert spy.__stubr__(call_info: :ceil) == [%{input: [1.9], output: 2.0}]
     end
+  end
 
+  describe "Stubr.call_info!/2" do
+    test "returns the call info for the stubbed module" do
+      stubbed = SUT.stub!([
+        ceil: fn 0.8 -> :stubbed_return end
+      ], module: Float, auto_stub: true, call_info: true)
+
+      stubbed.ceil(0.8)
+
+      assert SUT.call_info!(stubbed, :ceil) == [
+        %{input: [0.8], output: :stubbed_return}
+      ]
+    end
+
+    test "returns empty list if no call info for a stubbed function" do
+      stubbed = SUT.stub!([foo: fn _ -> :ok end], call_info: true)
+      assert SUT.call_info!(stubbed, :ceil) == []
+    end
   end
 
   describe "Stubr.called_with?/3" do
-
     test "returns true if stubbed function is called with single argument" do
       stub = Stubr.Stub.create!([foo: fn _ -> :ok end], call_info: true)
       stub.foo(:bar)
@@ -33,11 +62,9 @@ defmodule StubrTest do
       stub.foo(:bar, :baz, :qux)
       refute SUT.called_with?(stub, :foo, [:alpha, :beta])
     end
-
   end
 
   describe "Stubr.called_where?/3" do
-
     test "returns true if the invocation of the anonymous function returns true when applied to a single argument" do
       stub = Stubr.Stub.create!([foo: fn _ -> :ok end], call_info: true)
       stub.foo(%{bar: :ok, qux: :error})

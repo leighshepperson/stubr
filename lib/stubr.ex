@@ -1,4 +1,72 @@
 defmodule Stubr do
+  @moduledoc ~S"""
+  Provides stubs for Elixir.
+
+  Module stubs can be created using `create!/1` and `create!/2`.
+  The input to this function is a keyword list of function names
+  (expressed as atoms) and their implementations (expressed as
+  anonymous functions):
+
+      [function_name: (...) -> any()]
+
+  Additionally, takes an optional keyword list to configure the stub.
+
+  ## Options
+
+  The options available to `create!/2` are:
+
+    * `:module` - when set, if the module does not contain a function
+      defined in the keyword list, then raises an `UndefinedFunctionError`
+
+    * `:auto_stub` - when true and a module has been set, if there
+      is not a matching function, then defers to the module function
+      (defaults to `false`)
+
+    * `behaviour` - when set, raises a warning if the stub does not
+      implement the behaviour
+
+    * `call_info` - when set, if a function is called, records the input
+      and the output to the function. Accessed by calling
+      `__stubr__(:call_info: :function_name)`
+      (defaults to `false`)
+  """
+
+  @doc ~S"""
+  Recieves a keyword list of function names and anonymous functions
+  where all calls by the stub to a function in this list are deferred
+  to the invocation of the anonymous function.
+
+  ## Options
+
+    * `:module` - when set, if the module does not contain a function
+      defined in the keyword list, then raises an `UndefinedFunctionError`
+
+    * `:auto_stub` - when true and a module has been set, if there
+      is not a matching function, then defers to the module.
+      (defaults to `false`)
+
+    * `behaviour` - when set, raises a warning if the stub does not
+      implement the behaviour
+
+    * `call_info` - when set, if a function is called, records the input
+      and the output to the function. Accessed by calling
+      `__stubr__(:call_info: :function_name)`
+      (defaults to `false`)
+
+  ## Examples
+
+      iex> uniform_stub = [uniform: fn(_) -> 3 end]
+      iex> rand_stub = Stubr.stub!(uniform_stub, module: :rand)
+      iex> rand_stub.uniform(2)
+      3
+      iex> rand_stub.uniform(4)
+      3
+
+  """
+  def stub!(functions, opts \\ []) do
+    Stubr.Stub.create!(functions, opts)
+  end
+
   @doc ~S"""
   Creates a spy of the provided module. All function calls
   are defered to the original module and call information
@@ -15,6 +83,26 @@ defmodule Stubr do
   """
   def spy!(module) do
     Stubr.Stub.create!([], module: module, call_info: true, auto_stub: true)
+  end
+
+  @doc ~S"""
+  Returns the call info of a stubbed module.
+
+  ## Examples
+
+      iex> uniform_stub = [uniform: fn(_) -> 3 end]
+      iex> rand_stub = Stubr.stub!(uniform_stub, module: :rand, call_info: true)
+      iex> rand_stub.uniform(2)
+      3
+      iex> Stubr.call_info!(rand_stub, :uniform)
+      [%{input: [2], output: 3}]
+
+  """
+  def call_info!(stub, function_name) do
+    case stub.__stubr__(call_info: function_name) do
+      nil -> []
+      result -> result
+    end
   end
 
   @doc ~S"""
@@ -43,7 +131,7 @@ defmodule Stubr do
   """
   def called_where?(stub, function_name, fun) do
     stub
-    |> Stubr.Stub.call_info!(function_name)
+    |> Stubr.call_info!(function_name)
     |> Enum.any?(&fun.(&1.input))
   end
 
@@ -99,7 +187,7 @@ defmodule Stubr do
   """
   def call_count(stub, function_name) do
     stub
-    |> Stubr.Stub.call_info!(function_name)
+    |> Stubr.call_info!(function_name)
     |> Enum.count
   end
 
@@ -297,7 +385,7 @@ defmodule Stubr do
   """
   def last_call(stub, function_name) do
     number_of_calls = stub
-    |> Stubr.Stub.call_info!(function_name)
+    |> Stubr.call_info!(function_name)
     |> Enum.count
 
     stub
@@ -329,7 +417,7 @@ defmodule Stubr do
   """
   def get_call(stub, function_name, n) do
     %{input: input} = stub
-    |> Stubr.Stub.call_info!(function_name)
+    |> Stubr.call_info!(function_name)
     |> Enum.at(n - 1)
 
     input
@@ -360,7 +448,7 @@ defmodule Stubr do
   """
   def called_with_exactly?(stub, function_name, args) do
     stub
-    |> Stubr.Stub.call_info!(function_name)
+    |> Stubr.call_info!(function_name)
     |> Enum.reduce([], fn i, acc -> [i.input | acc] end)
     |> Enum.reverse
     == args
@@ -392,7 +480,7 @@ defmodule Stubr do
   """
   def returned?(stub, function_name, output) do
     stub
-    |> Stubr.Stub.call_info!(function_name)
+    |> Stubr.call_info!(function_name)
     |> Enum.any?(fn i -> i.output == output end)
   end
 
@@ -424,7 +512,7 @@ defmodule Stubr do
   """
   def call_count(stub, function_name, arguments) do
     stub
-    |> Stubr.Stub.call_info!(function_name)
+    |> Stubr.call_info!(function_name)
     |> Enum.count(fn(%{input: input}) -> input == arguments end)
   end
 
@@ -453,7 +541,7 @@ defmodule Stubr do
   """
   def called?(stub, function_name) do
     stub
-    |> Stubr.Stub.call_info!(function_name)
+    |> Stubr.call_info!(function_name)
     |> Enum.any?
   end
 
