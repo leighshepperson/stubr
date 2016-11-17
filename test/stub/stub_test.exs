@@ -1,7 +1,6 @@
 defmodule Stubr.StubTest do
   use ExUnit.Case, async: true
   alias Stubr.Stub, as: SUT
-  doctest SUT
 
   describe "Stubr.Stub.create!/1" do
     test "create a stub with a function that has no arguments" do

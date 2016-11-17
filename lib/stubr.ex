@@ -77,12 +77,12 @@ defmodule Stubr do
       iex> spy = Stubr.spy!(Float)
       iex> spy.ceil(1.3)
       2.0
-      iex> spy.__stubr__(call_info: :ceil)
+      iex> Stubr.call_info!(spy, :ceil)
       [%{input: [1.3], output: 2.0}]
 
   """
   def spy!(module) do
-    Stubr.Stub.create!([], module: module, call_info: true, auto_stub: true)
+    Stubr.stub!([], module: module, call_info: true, auto_stub: true)
   end
 
   @doc ~S"""
@@ -114,7 +114,7 @@ defmodule Stubr do
   ## Examples
 
       iex> stubbed_function = [foo: fn(_) -> :ok end]
-      iex> stub = Stubr.Stub.create!(stubbed_function, call_info: true)
+      iex> stub = Stubr.stub!(stubbed_function, call_info: true)
       iex> stub.foo(%{bar: :ok, baz: :error})
       iex> stub |> Stubr.called_where?(:foo, fn [arg] -> Map.has_key?(arg, :bar) end)
       true
@@ -143,7 +143,7 @@ defmodule Stubr do
   ## Examples
 
       iex> stubbed_function = [foo: fn(_, _) -> :ok end]
-      iex> stub = Stubr.Stub.create!(stubbed_function, call_info: true)
+      iex> stub = Stubr.stub!(stubbed_function, call_info: true)
       iex> stub.foo(:bar, :baz)
       iex> stub |> Stubr.called_with?(:foo, [:bar, :baz])
       true
@@ -171,7 +171,7 @@ defmodule Stubr do
   ## Examples
 
       iex> stubbed_functions = [foo: fn(_) -> :ok end, foo: fn(_, _) -> :ok end]
-      iex> stub = Stubr.Stub.create!(stubbed_functions, call_info: true)
+      iex> stub = Stubr.stub!(stubbed_functions, call_info: true)
       iex> stub.foo(:baz)
       iex> stub.foo(:baz)
       iex> stub.foo(:baz, :qux)
@@ -199,7 +199,7 @@ defmodule Stubr do
   ## Examples
 
       iex> stubbed_functions = [foo: fn(_) -> :ok end, foo: fn(_, _) -> :ok end]
-      iex> stub = Stubr.Stub.create!(stubbed_functions, call_info: true)
+      iex> stub = Stubr.stub!(stubbed_functions, call_info: true)
       iex> stub.foo(:baz)
       iex> stub |> Stubr.called_once?(:foo)
       true
@@ -222,7 +222,7 @@ defmodule Stubr do
   ## Examples
 
       iex> stubbed_functions = [foo: fn(_) -> :ok end, foo: fn(_, _) -> :ok end]
-      iex> stub = Stubr.Stub.create!(stubbed_functions, call_info: true)
+      iex> stub = Stubr.stub!(stubbed_functions, call_info: true)
       iex> stub.foo(:baz)
       iex> stub |> Stubr.called_twice?(:foo)
       false
@@ -245,7 +245,7 @@ defmodule Stubr do
   ## Examples
 
       iex> stubbed_functions = [foo: fn(_) -> :ok end, foo: fn(_, _) -> :ok end]
-      iex> stub = Stubr.Stub.create!(stubbed_functions, call_info: true)
+      iex> stub = Stubr.stub!(stubbed_functions, call_info: true)
       iex> stub.foo(:baz)
       iex> stub |> Stubr.called_thrice?(:foo)
       false
@@ -269,7 +269,7 @@ defmodule Stubr do
   ## Examples
 
       iex> stubbed_functions = [foo: fn(_) -> :ok end, foo: fn(_, _) -> :ok end]
-      iex> stub = Stubr.Stub.create!(stubbed_functions, call_info: true)
+      iex> stub = Stubr.stub!(stubbed_functions, call_info: true)
       iex> stub.foo(:baz)
       iex> stub |> Stubr.called_many?(:foo, 2)
       false
@@ -293,7 +293,7 @@ defmodule Stubr do
   ## Examples
 
       iex> stubbed_functions = [foo: fn(_) -> :ok end, foo: fn(_, _) -> :ok end]
-      iex> stub = Stubr.Stub.create!(stubbed_functions, call_info: true)
+      iex> stub = Stubr.stub!(stubbed_functions, call_info: true)
       iex> stub.foo(:baz)
       iex> stub |> Stubr.first_call(:foo)
       [:baz]
@@ -317,7 +317,7 @@ defmodule Stubr do
   ## Examples
 
       iex> stubbed_functions = [foo: fn(_, _) -> :ok end]
-      iex> stub = Stubr.Stub.create!(stubbed_functions, call_info: true)
+      iex> stub = Stubr.stub!(stubbed_functions, call_info: true)
       iex> stub.foo(:bar, :baz)
       iex> stub.foo(:bar, :qux)
       iex> stub |> Stubr.second_call(:foo)
@@ -342,7 +342,7 @@ defmodule Stubr do
   ## Examples
 
       iex> stubbed_functions = [foo: fn(_, _) -> :ok end]
-      iex> stub = Stubr.Stub.create!(stubbed_functions, call_info: true)
+      iex> stub = Stubr.stub!(stubbed_functions, call_info: true)
       iex> stub.foo(1, 2)
       iex> stub.foo(3, 4)
       iex> stub.foo(5, 6)
@@ -368,7 +368,7 @@ defmodule Stubr do
   ## Examples
 
       iex> stubbed_functions = [foo: fn(_, _) -> :ok end]
-      iex> stub = Stubr.Stub.create!(stubbed_functions, call_info: true)
+      iex> stub = Stubr.stub!(stubbed_functions, call_info: true)
       iex> stub.foo(1, 2)
       iex> stub.foo(3, 4)
       iex> stub |> Stubr.last_call(:foo)
@@ -400,7 +400,7 @@ defmodule Stubr do
   ## Examples
 
       iex> stubbed_functions = [foo: fn(_, _) -> :ok end]
-      iex> stub = Stubr.Stub.create!(stubbed_functions, call_info: true)
+      iex> stub = Stubr.stub!(stubbed_functions, call_info: true)
       iex> stub.foo(1, 2)
       iex> stub.foo(3, 4)
       iex> stub |> Stubr.get_call(:foo, 2)
@@ -431,7 +431,7 @@ defmodule Stubr do
   ## Examples
 
       iex> stubbed_functions = [foo: fn(_, _) -> :ok end]
-      iex> stub = Stubr.Stub.create!(stubbed_functions, call_info: true)
+      iex> stub = Stubr.stub!(stubbed_functions, call_info: true)
       iex> stub.foo(1, 2)
       iex> stub.foo(3, 4)
       iex> stub |> Stubr.called_with_exactly?(:foo, [[1, 2], [3, 4]])
@@ -463,7 +463,7 @@ defmodule Stubr do
   ## Examples
 
       iex> stubbed_functions = [foo: fn(_, _) -> :ok end]
-      iex> stub = Stubr.Stub.create!(stubbed_functions, call_info: true)
+      iex> stub = Stubr.stub!(stubbed_functions, call_info: true)
       iex> stub.foo(1, 2)
       iex> stub.foo(3, 4)
       iex> stub |> Stubr.returned?(:foo, :ok)
@@ -492,7 +492,7 @@ defmodule Stubr do
   ## Examples
 
       iex> stubbed_functions = [foo: fn(_) -> :ok end, foo: fn(_, _) -> :ok end]
-      iex> stub = Stubr.Stub.create!(stubbed_functions, call_info: true)
+      iex> stub = Stubr.stub!(stubbed_functions, call_info: true)
       iex> stub.foo(:baz)
       iex> stub.foo(:baz)
       iex> stub.foo(:baz, :qux)
@@ -524,7 +524,7 @@ defmodule Stubr do
   ## Examples
 
       iex> stubbed_functions = [foo: fn(_) -> :ok end, bar: fn(_) -> :ok end]
-      iex> stub = Stubr.Stub.create!(stubbed_functions, call_info: true)
+      iex> stub = Stubr.stub!(stubbed_functions, call_info: true)
       iex> stub.foo(:baz)
       iex> stub |> Stubr.called?(:foo)
       true

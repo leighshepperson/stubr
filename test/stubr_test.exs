@@ -3,7 +3,7 @@ defmodule StubrTest do
   alias Stubr, as: SUT
   doctest SUT
 
-  describe "Stubr.stub!/2" do
+  describe "SUT.stub!/2" do
     test "creates a stub" do
       stubbed = SUT.stub!([ceil: fn 1.9 -> :ok end])
       assert stubbed.ceil(1.9) == :ok
@@ -46,19 +46,19 @@ defmodule StubrTest do
 
   describe "Stubr.called_with?/3" do
     test "returns true if stubbed function is called with single argument" do
-      stub = Stubr.Stub.create!([foo: fn _ -> :ok end], call_info: true)
+      stub = SUT.stub!([foo: fn _ -> :ok end], call_info: true)
       stub.foo(:bar)
       assert SUT.called_with?(stub, :foo, [:bar])
     end
 
     test "returns true if stubbed function is called with multiple arguments" do
-      stub = Stubr.Stub.create!([foo: fn _, _, _ -> :ok end], call_info: true)
+      stub = SUT.stub!([foo: fn _, _, _ -> :ok end], call_info: true)
       stub.foo(:bar, :baz, :qux)
       assert SUT.called_with?(stub, :foo, [:bar, :baz, :qux])
     end
 
     test "returns false if stubbed function is not called with arguments" do
-      stub = Stubr.Stub.create!([foo: fn _, _, _ -> :ok end], call_info: true)
+      stub = SUT.stub!([foo: fn _, _, _ -> :ok end], call_info: true)
       stub.foo(:bar, :baz, :qux)
       refute SUT.called_with?(stub, :foo, [:alpha, :beta])
     end
@@ -66,19 +66,19 @@ defmodule StubrTest do
 
   describe "Stubr.called_where?/3" do
     test "returns true if the invocation of the anonymous function returns true when applied to a single argument" do
-      stub = Stubr.Stub.create!([foo: fn _ -> :ok end], call_info: true)
+      stub = SUT.stub!([foo: fn _ -> :ok end], call_info: true)
       stub.foo(%{bar: :ok, qux: :error})
       assert SUT.called_where?(stub, :foo, fn [a] -> Map.has_key?(a, :bar) end)
     end
 
     test "returns true if the invocation of the anonymous function returns true when applied to multiple arguments" do
-      stub = Stubr.Stub.create!([foo: fn _, _, _ -> :ok end], call_info: true)
+      stub = SUT.stub!([foo: fn _, _, _ -> :ok end], call_info: true)
       stub.foo(%{bar: :ok, qux: :error}, :bar, :qux)
       assert SUT.called_where?(stub, :foo, fn [a, _, c] -> Map.has_key?(a, :bar) && c == :qux end)
     end
 
     test "returns true if truthy on at least one of the function calls" do
-      stub = Stubr.Stub.create!([foo: fn _ -> :ok end, foo: fn _, _ -> :ok end], call_info: true)
+      stub = SUT.stub!([foo: fn _ -> :ok end, foo: fn _, _ -> :ok end], call_info: true)
       stub.foo(:bar)
       stub.foo(:bar, :qux)
       stub.foo(%{baz: :ok})
@@ -93,7 +93,7 @@ defmodule StubrTest do
     end
 
     test "returns false if falsey on all the arguments to the function call" do
-      stub = Stubr.Stub.create!([foo: fn _ -> :ok end, foo: fn _, _ -> :ok end], call_info: true)
+      stub = SUT.stub!([foo: fn _ -> :ok end, foo: fn _, _ -> :ok end], call_info: true)
       stub.foo(:bar)
       stub.foo(:bar, :qux)
       stub.foo(%{baz: :ok})
@@ -107,20 +107,20 @@ defmodule StubrTest do
   describe "Stubr.called_once?/2" do
 
     test "returns true if the function was called once" do
-      stub = Stubr.Stub.create!([foo: fn _ -> :ok end], call_info: true)
+      stub = SUT.stub!([foo: fn _ -> :ok end], call_info: true)
       stub.foo(:bar)
       assert SUT.called_once?(stub, :foo)
     end
 
     test "returns false if the function was not called once" do
-      stub = Stubr.Stub.create!([foo: fn _ -> :ok end], call_info: true)
+      stub = SUT.stub!([foo: fn _ -> :ok end], call_info: true)
       stub.foo(:bar)
       stub.foo(:bar)
       refute SUT.called_once?(stub, :foo)
     end
 
     test "returns false if the function was never called" do
-      stub = Stubr.Stub.create!([foo: fn _ -> :ok end], call_info: true)
+      stub = SUT.stub!([foo: fn _ -> :ok end], call_info: true)
       refute SUT.called_once?(stub, :foo)
     end
 
@@ -129,20 +129,20 @@ defmodule StubrTest do
   describe "Stubr.called_twice?/2" do
 
     test "returns true if the function was called twice" do
-      stub = Stubr.Stub.create!([foo: fn _ -> :ok end], call_info: true)
+      stub = SUT.stub!([foo: fn _ -> :ok end], call_info: true)
       stub.foo(:bar)
       stub.foo(:bar)
       assert SUT.called_twice?(stub, :foo)
     end
 
     test "returns false if the function was not called twice" do
-      stub = Stubr.Stub.create!([foo: fn _ -> :ok end], call_info: true)
+      stub = SUT.stub!([foo: fn _ -> :ok end], call_info: true)
       stub.foo(:bar)
       refute SUT.called_twice?(stub, :foo)
     end
 
     test "returns false if the function was never called" do
-      stub = Stubr.Stub.create!([foo: fn _ -> :ok end], call_info: true)
+      stub = SUT.stub!([foo: fn _ -> :ok end], call_info: true)
       refute SUT.called_twice?(stub, :foo)
     end
 
@@ -151,7 +151,7 @@ defmodule StubrTest do
   describe "Stubr.called_thrice?/2" do
 
     test "returns true if the function was called twice" do
-      stub = Stubr.Stub.create!([foo: fn _ -> :ok end], call_info: true)
+      stub = SUT.stub!([foo: fn _ -> :ok end], call_info: true)
 
       stub.foo(:bar)
       stub.foo(:bar)
@@ -161,22 +161,21 @@ defmodule StubrTest do
     end
 
     test "returns false if the function was not called twice" do
-      stub = Stubr.Stub.create!([foo: fn _ -> :ok end], call_info: true)
+      stub = SUT.stub!([foo: fn _ -> :ok end], call_info: true)
       stub.foo(:bar)
       refute SUT.called_thrice?(stub, :foo)
     end
 
     test "returns false if the function was never called" do
-      stub = Stubr.Stub.create!([foo: fn _ -> :ok end], call_info: true)
+      stub = SUT.stub!([foo: fn _ -> :ok end], call_info: true)
       refute SUT.called_thrice?(stub, :foo)
     end
 
   end
 
   describe "Stubr.called_many?/2" do
-
     test "returns true if the function was called n-many times" do
-      stub = Stubr.Stub.create!([foo: fn _ -> :ok end], call_info: true)
+      stub = SUT.stub!([foo: fn _ -> :ok end], call_info: true)
 
       stub.foo(:bar)
       stub.foo(:bar)
@@ -186,22 +185,21 @@ defmodule StubrTest do
     end
 
     test "returns false if the function was not called n - many times" do
-      stub = Stubr.Stub.create!([foo: fn _ -> :ok end], call_info: true)
+      stub = SUT.stub!([foo: fn _ -> :ok end], call_info: true)
       stub.foo(:bar)
       refute SUT.called_many?(stub, :foo, 2)
     end
 
     test "returns false if the function was never called" do
-      stub = Stubr.Stub.create!([foo: fn _ -> :ok end], call_info: true)
+      stub = SUT.stub!([foo: fn _ -> :ok end], call_info: true)
       refute SUT.called_many?(stub, :foo, 1)
     end
 
   end
 
   describe "Stubr.first_call/2" do
-
     test "returns the first call" do
-      stub = Stubr.Stub.create!([foo: fn _, _ -> :ok end], call_info: true)
+      stub = SUT.stub!([foo: fn _, _ -> :ok end], call_info: true)
       stub.foo(:bar, :baz)
       assert SUT.first_call(stub, :foo) == [:bar, :baz]
     end
@@ -211,7 +209,7 @@ defmodule StubrTest do
   describe "Stubr.second_call/2" do
 
     test "returns the second call" do
-      stub = Stubr.Stub.create!([foo: fn _, _ -> :ok end], call_info: true)
+      stub = SUT.stub!([foo: fn _, _ -> :ok end], call_info: true)
 
       stub.foo(:bar, :baz)
       stub.foo(:bar, :qux)
@@ -222,9 +220,8 @@ defmodule StubrTest do
   end
 
   describe "Stubr.third_call/2" do
-
     test "returns the third call" do
-      stub = Stubr.Stub.create!([foo: fn _, _ -> :ok end], call_info: true)
+      stub = SUT.stub!([foo: fn _, _ -> :ok end], call_info: true)
 
       stub.foo(:bar, :baz)
       stub.foo(:bar, :qux)
@@ -235,9 +232,8 @@ defmodule StubrTest do
   end
 
   describe "Stubr.get_call/3" do
-
     test "returns the nth call" do
-      stub = Stubr.Stub.create!([foo: fn _, _ -> :ok end], call_info: true)
+      stub = SUT.stub!([foo: fn _, _ -> :ok end], call_info: true)
 
       stub.foo(:bar, :baz)
       stub.foo(:bar, :qux)
@@ -252,9 +248,8 @@ defmodule StubrTest do
   end
 
   describe "Stubr.last_call/2" do
-
     test "returns the last call" do
-      stub = Stubr.Stub.create!([foo: fn _, _ -> :ok end], call_info: true)
+      stub = SUT.stub!([foo: fn _, _ -> :ok end], call_info: true)
 
       stub.foo(:bar, :baz)
       stub.foo(:bar, :qux)
@@ -267,9 +262,8 @@ defmodule StubrTest do
   end
 
   describe "Stubr.call_count/2" do
-
     test "returns the number of times a stubbed function was called" do
-      stub = Stubr.Stub.create!([foo: fn _ -> :ok end], call_info: true)
+      stub = SUT.stub!([foo: fn _ -> :ok end], call_info: true)
 
       stub.foo(:bar)
       stub.foo(:bar)
@@ -281,9 +275,8 @@ defmodule StubrTest do
   end
 
   describe "Stubr.call_count/3" do
-
     test "returns the number of times a stubbed function was called with a particular argument" do
-      stub = Stubr.Stub.create!([foo: fn _ -> :ok end, foo: fn _, _ -> :ok end ], call_info: true)
+      stub = SUT.stub!([foo: fn _ -> :ok end, foo: fn _, _ -> :ok end ], call_info: true)
 
       stub.foo(:bar)
       stub.foo(:bar)
@@ -296,9 +289,8 @@ defmodule StubrTest do
   end
 
   describe "Stubr.called?/2" do
-
     test "returns true if the stubbed function was called" do
-      stub = Stubr.Stub.create!([foo: fn _ -> :ok end], call_info: true)
+      stub = SUT.stub!([foo: fn _ -> :ok end], call_info: true)
 
       stub.foo(:bar)
 
@@ -306,7 +298,7 @@ defmodule StubrTest do
     end
 
     test "returns false if the stubbed function was not called" do
-      stub = Stubr.Stub.create!([foo: fn _ -> :ok end], call_info: true)
+      stub = SUT.stub!([foo: fn _ -> :ok end], call_info: true)
 
       stub.foo(:bar)
 
@@ -316,9 +308,8 @@ defmodule StubrTest do
   end
 
   describe "Stubr.called_with_exactly?/3" do
-
     test "returns true if the stubbed function was called with the exact arguments" do
-      stub = Stubr.Stub.create!([foo: fn _, _ -> :ok end], call_info: true)
+      stub = SUT.stub!([foo: fn _, _ -> :ok end], call_info: true)
 
       stub.foo(:bar, :baz)
       stub.foo(:baz, :qux)
@@ -327,7 +318,7 @@ defmodule StubrTest do
     end
 
     test "returns false if the stubbed function was not called with the exact arguments" do
-      stub = Stubr.Stub.create!([foo: fn _ -> :ok end], call_info: true)
+      stub = SUT.stub!([foo: fn _ -> :ok end], call_info: true)
 
       stub.foo(:bar)
       stub.foo(:bar)
@@ -338,9 +329,8 @@ defmodule StubrTest do
   end
 
   describe "Stubr.returned?/3" do
-
     test "returns true if the stubbed function returns the value at any point" do
-      stub = Stubr.Stub.create!([
+      stub = SUT.stub!([
         foo: fn "bar" -> {:ok} end,
         foo: fn _, _ -> :ok end
       ], call_info: true)
@@ -353,7 +343,7 @@ defmodule StubrTest do
     end
 
     test "returns false if the stubbed function does not return the value at any point" do
-      stub = Stubr.Stub.create!([
+      stub = SUT.stub!([
         foo: fn "bar" -> {:ok} end,
         foo: fn _, _ -> :ok end
       ], call_info: true)
