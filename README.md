@@ -2,13 +2,22 @@
 
 ![Build Status](https://travis-ci.org/leighshepperson/stubr.svg?branch=master)
 
-Stubr lets you define module stubs and spies. Here, a **module stub** provides canned answers to
-function calls and a **module spy** records inputs and outputs to function calls. Another way to think
-of Stubr is as a collection of convenience functions that let you create mocks as nouns, as in the
-article [mocks and explicit contracts](http://blog.plataformatec.com.br/2015/10/mocks-and-explicit-contracts/).
+Stubr is a set of functions helping people to create stubs and spies in Elixir.
 
-Stubr is entierly written in Elixir and has no dependencies on other libraries. Additionally, you can safely run
-your tests asynchronously.
+## Philosopy
+
+In Elixir, you should aim to write pure functions that don't affect the state of the system. However, this is easier said than done. For example, sometimes you need to make calls to external API’s or modify databases and these actions can lead to side effects. 
+
+One of the ways to get around this is by using a mocking framework that allows you to test expectations. For example, you might create a mock of a repository and then write a test that checks if it calls a save function along the way. Essentially, you're testing a side effect of the system, and this is something you should avoid in functional languages.
+
+Stubr takes cues from [mocks and explicit contracts](http://blog.plataformatec.com.br/2015/10/mocks-and-explicit-contracts/) by providing a set of functions to help people create "mocks as nouns and not as verbs". It has been designed to be easy to use, is highly configurable, and provides many methods to inspect and create stubs and spies:
+
+```
+iex> stub = Stubr.stub!([foo: fn _ -> :ok end], call_info: true)
+iex> stub.foo(1)
+iex> stub |> Stubr.called_once?(:foo)
+true
+```
 
 ## Installation
 
@@ -18,24 +27,28 @@ Add `stubr` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
-  [{:stubr, "~> 1.3.5", only: :test}]
+  [{:stubr, "~> 1.4.0", only: :test}]
 end
 ```
 
-## Example - Random numbers
+##### Random numbers
+
+The `uniform/1` function in the erlang `:rand` module can be stubbed by using the `stub!` function with the module option set to `:rand`. Note, there is no need to explicitly set the module option, it is just used to make sure the `uniform/1` function exists in the `:rand` module. 
 
 ```elixir
-    describe "stub :rand" do
-      test "can stub :rand.uniform/1" do
-        rand_stub = Stubr.stub!([uniform: fn _ -> 1 end], module: :rand)
+test "create stub of :rand.uniform/1" do
+  rand_stub = Stubr.stub!([uniform: fn _ -> 1 end], module: :rand)
 
-        assert rand_stub.uniform(4) == 1
-      end
-    end
-
+  assert rand_stub.uniform(1) == 1
+  assert rand_stub.uniform(2) == 1
+  assert rand_stub.uniform(3) == 1
+  assert rand_stub.uniform(4) == 1
+  assert rand_stub.uniform(5) == 1
+  assert rand_stub.uniform(6) == 1
+end
 ```
 
-## Example - Timex
+##### Timex
 
 ```elixir
 describe "stub Timex" do
