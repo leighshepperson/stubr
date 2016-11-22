@@ -25,7 +25,7 @@ defmodule StubrTest do
     end
   end
 
-  describe "Stubr.call_info!/2" do
+  describe "Stubr.call_info/2" do
     test "returns the call info for the stubbed module" do
       stubbed = SUT.stub!([
         ceil: fn 0.8 -> :stubbed_return end
@@ -33,14 +33,14 @@ defmodule StubrTest do
 
       stubbed.ceil(0.8)
 
-      assert SUT.call_info!(stubbed, :ceil) == [
+      assert SUT.call_info(stubbed, :ceil) == [
         %{input: [0.8], output: :stubbed_return}
       ]
     end
 
     test "returns empty list if no call info for a stubbed function" do
       stubbed = SUT.stub!([foo: fn _ -> :ok end], call_info: true)
-      assert SUT.call_info!(stubbed, :ceil) == []
+      assert SUT.call_info(stubbed, :ceil) == []
     end
   end
 

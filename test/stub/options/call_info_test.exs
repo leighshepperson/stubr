@@ -44,24 +44,20 @@ defmodule Stubr.Stub.Options.CallInfoTest do
       ]
     end
 
-    test "does not get the call info of a function if the call_info option is false" do
+    test "returns empty list if the call_info option is false" do
       stubbed = SUT.create!([
         ceil: fn 0.8 -> :stubbed_return end
       ], module: Float, auto_stub: true, call_info: false)
 
-      assert_raise StubrError, "The call_info option must be set and equal to true", fn ->
-        stubbed.__stubr__(call_info: :ceil)
-      end
+      assert stubbed.__stubr__(call_info: :ceil) == []
     end
 
-    test "does not get the call info of a function if the call_info option is not set" do
+    test "returns empty list if the call_info option is not set" do
       stubbed = SUT.create!([
         ceil: fn 0.8 -> :stubbed_return end
       ], module: Float, auto_stub: true)
 
-      assert_raise StubrError, "The call_info option must be set and equal to true", fn ->
-        stubbed.__stubr__(call_info: :ceil)
-      end
+      assert stubbed.__stubr__(call_info: :ceil) == []
     end
   end
 end

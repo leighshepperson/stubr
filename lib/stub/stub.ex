@@ -73,7 +73,7 @@ defmodule Stubr.Stub do
           {:ok, call_info} = StubrServer.get(unquote(pid), :call_info, function_name)
           call_info
         else
-          raise StubrError, message: "The call_info option must be set and equal to true"
+          []
         end
       end
 

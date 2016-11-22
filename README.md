@@ -143,7 +143,7 @@ assert stubbed.to_string(2.3) == "2.3"
 
 ## Example - Call Information
 
-If the `call_info` option is true, then you can use the function `Stubr.call_info!` to get call information about the stub:
+If the `call_info` option is true, then you can use the function `Stubr.call_info` to get call information about the stub:
 
 ```elixir
 stubbed = Stubr.stub!([
@@ -163,24 +163,24 @@ stubbed.ceil(1.2)
 stubbed.ceil(1.2345, 2)
 stubbed.to_string(2.3)
 
-assert Stubr.call_info!(stubbed, :ceil) == [
+assert Stubr.call_info(stubbed, :ceil) == [
   %{input: [0.8], output: :stubbed_return},
   %{input: [1.2], output: 2.0},
   %{input: [1.2345, 2], output: 1.24}
 ]
 
-assert Stubr.call_info!(stubbed, :parse) == [
+assert Stubr.call_info(stubbed, :parse) == [
   %{input: ["0.3"], output: :stubbed_return}
 ]
 
-assert Stubr.call_info!(stubbed, :round) == [
+assert Stubr.call_info(stubbed, :round) == [
   %{input: [8, 1], output: :stubbed_return},
   %{input: [1, 2], output: :stubbed_return},
   %{input: [1.2], output: 1.0},
   %{input: [1.324, 2], output: 1.32}
 ]
 
-assert Stubr.call_info!(stubbed, :to_string) == [
+assert Stubr.call_info(stubbed, :to_string) == [
   %{input: [2.3], output: "2.3"}
 ]
 ```

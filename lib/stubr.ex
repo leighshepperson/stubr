@@ -77,7 +77,7 @@ defmodule Stubr do
       iex> spy = Stubr.spy!(Float)
       iex> spy.ceil(1.3)
       2.0
-      iex> Stubr.call_info!(spy, :ceil)
+      iex> Stubr.call_info(spy, :ceil)
       [%{input: [1.3], output: 2.0}]
 
   """
@@ -94,11 +94,11 @@ defmodule Stubr do
       iex> rand_stub = Stubr.stub!(uniform_stub, module: :rand, call_info: true)
       iex> rand_stub.uniform(2)
       3
-      iex> Stubr.call_info!(rand_stub, :uniform)
+      iex> Stubr.call_info(rand_stub, :uniform)
       [%{input: [2], output: 3}]
 
   """
-  def call_info!(stub, function_name) do
+  def call_info(stub, function_name) do
     case stub.__stubr__(call_info: function_name) do
       nil -> []
       result -> result
@@ -131,7 +131,7 @@ defmodule Stubr do
   """
   def called_where?(stub, function_name, fun) do
     stub
-    |> Stubr.call_info!(function_name)
+    |> Stubr.call_info(function_name)
     |> Enum.any?(&fun.(&1.input))
   end
 
@@ -187,7 +187,7 @@ defmodule Stubr do
   """
   def call_count(stub, function_name) do
     stub
-    |> Stubr.call_info!(function_name)
+    |> Stubr.call_info(function_name)
     |> Enum.count
   end
 
@@ -385,7 +385,7 @@ defmodule Stubr do
   """
   def last_call(stub, function_name) do
     number_of_calls = stub
-    |> Stubr.call_info!(function_name)
+    |> Stubr.call_info(function_name)
     |> Enum.count
 
     stub
@@ -417,7 +417,7 @@ defmodule Stubr do
   """
   def get_call(stub, function_name, n) do
     %{input: input} = stub
-    |> Stubr.call_info!(function_name)
+    |> Stubr.call_info(function_name)
     |> Enum.at(n - 1)
 
     input
@@ -448,7 +448,7 @@ defmodule Stubr do
   """
   def called_with_exactly?(stub, function_name, args) do
     stub
-    |> Stubr.call_info!(function_name)
+    |> Stubr.call_info(function_name)
     |> Enum.reduce([], fn i, acc -> [i.input | acc] end)
     |> Enum.reverse
     == args
@@ -480,7 +480,7 @@ defmodule Stubr do
   """
   def returned?(stub, function_name, output) do
     stub
-    |> Stubr.call_info!(function_name)
+    |> Stubr.call_info(function_name)
     |> Enum.any?(fn i -> i.output == output end)
   end
 
@@ -512,7 +512,7 @@ defmodule Stubr do
   """
   def call_count(stub, function_name, arguments) do
     stub
-    |> Stubr.call_info!(function_name)
+    |> Stubr.call_info(function_name)
     |> Enum.count(fn(%{input: input}) -> input == arguments end)
   end
 
@@ -541,7 +541,7 @@ defmodule Stubr do
   """
   def called?(stub, function_name) do
     stub
-    |> Stubr.call_info!(function_name)
+    |> Stubr.call_info(function_name)
     |> Enum.any?
   end
 
