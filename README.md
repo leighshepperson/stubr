@@ -2,26 +2,25 @@
 
 ![Build Status](https://travis-ci.org/leighshepperson/stubr.svg?branch=master)
 
-In functional languages you should write pure functions. However, sometimes we need functions to call external API’s that affect the state of the system. So these functions are impure. In non-functional languages you create mocks to test expectations. For example, you might create a mock of a repository and the test checks it calls the save function. You are testing a side effect. This is something you should avoid in functional languages.
+Stubr lets you define module stubs and spies. Here, a **module stub** provides canned answers to
+function calls and a **module spy** records inputs and outputs to function calls. Another way to think
+of Stubr is as a collection of convenience functions that let you create mocks as nouns, as in the
+article [mocks and explicit contracts](http://blog.plataformatec.com.br/2015/10/mocks-and-explicit-contracts/).
 
-Instead of mocks we should use stubs. Mocking frameworks tend to treat them as interchangeable and this makes it hard to tell them apart. So it is good to have a simple definition. [Quoting](http://martinfowler.com/articles/mocksArentStubs.html) Martin Fowler:
+Stubr is entierly written in Elixir and has no dependencies on other libraries. Additionally, you can safely run
+your tests asynchronously.
 
-* Stubs provide canned answers to calls made during the test, usually not responding at all to anything outside what's programmed in for the test. Stubs may also record information about calls, such as an email gateway stub that remembers the messages it 'sent', or maybe only how many messages it 'sent'.
-* Mocks are objects pre-programmed with expectations which form a specification of the calls they are expected to receive.
+## Installation
 
-So what does Stubr provide:
+Stubr is [available in Hex](https://hex.pm/packages/stubr), the package can be installed as:
 
-* Stubr is not a mock framework
-* Stubr provides canned answers to calls made during a test
-* Stubr makes it easy to create stubs
-* Stubr makes sure the module you stub HAS the function you want to stub
-* Stubr stubs as many functions and patterns as you want
-* Stubr works without an explicit module. You set it up how you want
-* Stubr lets you do asynchronous tests
-* Stubr won't redefine your modules!
-* Stubr auto-stubs non-stubbed functions
-* Stubr records call information
-* Stubr has ZERO dependencies
+Add `stubr` to your list of dependencies in `mix.exs`:
+
+```elixir
+def deps do
+  [{:stubr, "~> 1.3.5", only: :test}]
+end
+```
 
 ## Example - Random numbers
 
@@ -252,15 +251,3 @@ Examples for Stubr: [Examples](https://github.com/leighshepperson/stubr_examples
 * "Was called with" functions
 * "Was called with matching pattern" functions
 * Callbacks
-
-## Installation
-
-Stubr is [available in Hex](https://hex.pm/packages/stubr), the package can be installed as:
-
-Add `stubr` to your list of dependencies in `mix.exs`:
-
-```elixir
-def deps do
-  [{:stubr, "~> 1.3.5", only: :test}]
-end
-```
