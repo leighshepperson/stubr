@@ -6,7 +6,7 @@ Stubr is a set of functions helping people to create stubs and spies in Elixir.
 
 ## Philosopy
 
-In Elixir, you should aim to write pure functions that don't affect the state of the system. However, this is easier said than done. For example, sometimes you need to make calls to external API’s or modify databases and these actions can lead to side effects. 
+In Elixir, you should aim to write pure functions. However, this is easier said than done. For example, sometimes you need to write functions that post to external API’s or write functions that mutate JSON data-stores. Since these actions generally lead to side effects, it makes it harder to unit test them.
 
 One of the ways to get around this is by using a mocking framework that allows you to test expectations. For example, you might create a mock of a repository and then write a test that checks if it calls a save function along the way. Essentially, you're testing a side effect of the system, and this is something you should avoid in functional languages.
 
