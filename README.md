@@ -39,7 +39,7 @@ end
 
 ## Developer documentation
 
-Stubr documentation is [avaliable in hexdocs](https://hexdocs.pm/stubr/Stubr.html).
+Stubr documentation is [available in hexdocs](https://hexdocs.pm/stubr/Stubr.html).
 
 ## Examples
 
