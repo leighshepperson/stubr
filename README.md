@@ -108,15 +108,6 @@ end
 
 ## Links
 
-How stubs can be used in TDD for functional languages: [https://www.infoq.com/presentations/mock-fsharp-tdd](https://www.infoq.com/presentations/mock-fsharp-tdd)
+This is a good guide to TDD in functional languages using stubs: [https://www.infoq.com/presentations/mock-fsharp-tdd](https://www.infoq.com/presentations/mock-fsharp-tdd)
 
 Mark Seemann's [blog post](http://blog.ploeh.dk/2013/10/23/mocks-for-commands-stubs-for-queries/) talks about the difference between Mocks and Stubs in the context of commands and queries.
-
-Examples for Stubr: [Examples](https://github.com/leighshepperson/stubr_examples)
-
-## Roadmap
-
-* Return different values for different calls of the same function
-* "Was called with" functions
-* "Was called with matching pattern" functions
-* Callbacks
