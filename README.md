@@ -6,7 +6,7 @@ Stubr is a set of functions helping people to create stubs and spies in Elixir.
 
 ## About
 
-In Elixir, you should aim to write pure functions. However, sometimes you need to write functions that post to external API’s or ones that depend on the current time. Since these actions can lead to side effects, they can make it harder to test your system.
+In Elixir, you should aim to write pure functions. However, sometimes you need to write functions that post to external API’s or functions that depend on the current time. Since these actions can lead to side effects, they can make it harder to unit test your system.
 
 Stubr solves this problem by taking cues from [mocks and explicit contracts](http://blog.plataformatec.com.br/2015/10/mocks-and-explicit-contracts/). It provides a set of functions that help people create "mocks as nouns" and not "mocks as verbs":
 
@@ -15,6 +15,13 @@ iex> stub = Stubr.stub!([foo: fn _ -> :ok end], call_info: true)
 iex> stub.foo(1)
 iex> stub |> Stubr.called_once?(:foo)
 true
+
+iex> spy = Stubr.spy!(Float)
+iex> spy.ceil(1.5)
+iex> spy |> Stubr.called_with?(:ceil, [1.5])
+true
+iex> spy |> Stubr.called_twice?(:ceil)
+false
 ```
 
 ## Installation
@@ -29,9 +36,16 @@ def deps do
 end
 ```
 
+
+## Developer documentation
+
+Stubr documentation is [avaliable in hexdocs](https://hexdocs.pm/stubr/Stubr.html).
+
+## Examples
+
 ### Random numbers
 
-In this example, we stub the `uniform/1` function in the `:rand` module. Note, there is no need to explicitly set the module option, it is just used to make sure the `uniform/1` function exists in the `:rand` module. 
+It is easy to use `Stubr.stub!` to set up a stub for the `uniform/1` function in the `:rand` module. Note, there is no need to explicitly set the module option, it is just used to make sure the `uniform/1` function exists in the `:rand` module.
 
 ```elixir
 test "create a stub of the :rand.uniform/1 function" do
@@ -48,7 +62,7 @@ end
 
 ### Timex
 
-In this example, we stub the `now/0` function in the `Timex` module. However, we also want the stub to defer to the original functionality of the `before?/2` function. To do this, we just set the `module` option to `Timex` and the `auto_stub` option to `true`:
+As above, we can use `Stubr.stub!` to stub the `Timex.now/0` function in the `Timex` module. However, we also want the stub to defer to the original functionality of the `Timex.before?/2` function. To do this, we just set the `module` option to `Timex` and the `auto_stub` option to `true`.
 
 ```elixir
 test "create a stub of Timex.now/0 and defer on all other functions" do

@@ -26,7 +26,7 @@ defmodule Stubr.Mixfile do
 
   defp description do
     """
-    A stubbing framework for Elixir
+    Stubr is a set of functions helping people to create stubs and spies in Elixir.
     """
   end
 
