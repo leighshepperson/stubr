@@ -1,9 +1,22 @@
 defmodule Stubr do
   @moduledoc ~S"""
-  Provides stubs for Elixir.
+  Stubr is a set of functions helping people to create stubs and
+  spies in Elixir.
 
-  Module stubs can be created using `create!/1` and `create!/2`.
-  The input to this function is a keyword list of function names
+  ## Stubs
+
+  Stubs can be created using `stub!/1` and `stub!/2`:
+
+      iex> stub = Stubr.stub!([foo: fn -> :bar end])
+      iex> stub.foo()
+      :bar
+
+      iex> stub = Stubr.stub!([foo: fn _ -> :bar end], call_info: true)
+      iex> stub.foo(:baz)
+      iex> stub |> Stubr.called_with?(:foo, [:baz])
+      true
+
+  The input to these functions is a keyword list of function names
   (expressed as atoms) and their implementations (expressed as
   anonymous functions):
 
@@ -11,9 +24,9 @@ defmodule Stubr do
 
   Additionally, takes an optional keyword list to configure the stub.
 
-  ## Options
+  #### Options
 
-  The options available to `create!/2` are:
+  The options available to `stub!/2` are:
 
     * `:module` - when set, if the module does not contain a function
       defined in the keyword list, then raises an `UndefinedFunctionError`
@@ -29,6 +42,18 @@ defmodule Stubr do
       and the output to the function. Accessed by calling
       `__stubr__(:call_info: :function_name)`
       (defaults to `false`)
+
+  ## Spies
+
+  Spies can be created using `spy!/1`:
+
+      iex> spy = Stubr.spy!(Float)
+      iex> spy.ceil(1.5)
+      iex> spy |> Stubr.called_with?(:ceil, [1.5])
+      true
+      iex> spy |> Stubr.called_twice?(:ceil)
+      false
+
   """
 
   @doc ~S"""
@@ -50,7 +75,7 @@ defmodule Stubr do
 
     * `call_info` - when set, if a function is called, records the input
       and the output to the function. Accessed by calling
-      `__stubr__(:call_info: :function_name)`
+      `Stubr.call_info(stub, :function_name)`
       (defaults to `false`)
 
   ## Examples
