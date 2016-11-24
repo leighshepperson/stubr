@@ -4,11 +4,11 @@
 
 Stubr is a set of functions helping people to create stubs and spies in Elixir.
 
-## Philosopy
+## About
 
-In Elixir, you should aim to write pure functions. However, this is easier said than done. For example, sometimes you need to write functions that post to external API’s or write functions that depend on the current time. Since these actions can lead to side effects, they can make it harder to test your system.
+In Elixir, you should aim to write pure functions. However, sometimes you need to write functions that post to external API’s or ones that depend on the current time. Since these actions can lead to side effects, they can make it harder to test your system.
 
-Stubr solves this problem by taking cues from [mocks and explicit contracts](http://blog.plataformatec.com.br/2015/10/mocks-and-explicit-contracts/). It provides a set of functions that help people create "mocks as nouns" and not "mocks as verbs". The library has been designed to be easy to use, is highly configurable, and provides many methods that create and inspect stubs and spies:
+Stubr solves this problem by taking cues from [mocks and explicit contracts](http://blog.plataformatec.com.br/2015/10/mocks-and-explicit-contracts/). It provides a set of functions that help people create "mocks as nouns" and not "mocks as verbs":
 
 ```elixir
 iex> stub = Stubr.stub!([foo: fn _ -> :ok end], call_info: true)
