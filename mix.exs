@@ -3,7 +3,7 @@ defmodule Stubr.Mixfile do
 
   def project do
     [app: :stubr,
-     version: "1.4.0",
+     version: "1.5.0",
      elixir: "~> 1.4",
      description: description(),
      package: package(),
@@ -32,7 +32,7 @@ defmodule Stubr.Mixfile do
   defp package do
     [
       name: :stubr,
-      files: ["lib", "priv", "mix.exs", "README*", "readme*", "LICENSE*", "license*"],
+      files: ["lib", "mix.exs", "README*", "LICENSE*"],
       maintainers: ["Leigh Shepperson"],
       licenses: ["MIT"],
       links: %{"GitHub" => "https://github.com/leighshepperson/stubr",
