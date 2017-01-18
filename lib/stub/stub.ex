@@ -79,7 +79,7 @@ defmodule Stubr.Stub do
 
       for {function_name, args_for_function} <- args_for_functions do
         def unquote(function_name)(unquote_splicing(args_for_function)) do
-          variable_values = for {_, variable_value} <- binding, do: variable_value
+          variable_values = for {_, variable_value} <- binding(), do: variable_value
 
           {success_atom, output} = StubrServer.invoke(unquote(pid), {unquote(function_name), variable_values})
 
