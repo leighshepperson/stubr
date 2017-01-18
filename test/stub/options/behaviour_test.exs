@@ -26,7 +26,7 @@ defmodule Stubr.Stub.Options.BehaviourTest do
 
       assert capture_io(:stderr, fn ->
         SUT.create!([{:foo, fn _ -> 4 end}], behaviour: NoBehaviour) end
-      ) =~ "behaviour Stubr.Stub.Options.BehaviourTest.NoBehaviour undefined"
+      ) =~ "behaviour Stubr.Stub.Options.BehaviourTest.NoBehaviour is undefined"
     end
 
     test "succeeds if the stub implements a behaviour" do
