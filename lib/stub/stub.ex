@@ -45,6 +45,8 @@ defmodule Stubr.Stub do
   end
 
   defp create_stub(pid, args, opts) do
+    args = args |> Enum.uniq
+
     pid
     |> create_body(args, opts)
     |> create_module
