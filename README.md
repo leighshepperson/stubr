@@ -6,7 +6,7 @@ Stubr is a set of functions helping people to create stubs and spies in Elixir.
 
 ## About
 
-In Elixir, you should aim to write pure functions. However, sometimes you need to write functions that post to external API’s or functions that depend on the current time. Since these actions can lead to side effects, they can make it harder to unit test your system.
+Elixir is a functional language, so you should aim to write pure functions. However, sometimes you need to call external API’s or check the current time. Since these actions can have side effects, they make it harder to unit test your system.
 
 Stubr solves this problem by taking cues from [mocks and explicit contracts](http://blog.plataformatec.com.br/2015/10/mocks-and-explicit-contracts/). It provides a set of functions that help people create "mocks as nouns" and not "mocks as verbs":
 
@@ -32,15 +32,7 @@ Add `stubr` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
-  [{:stubr, "~> 1.5.0", only: :test}]
-end
-```
-
-For versions of elixir less than 1.4 use this package:
-
-```elixir
-def deps do
-  [{:stubr, "~> 1.4.0", only: :test}]
+  [{:stubr, "~> 1.5.1", only: :test}]
 end
 ```
 
@@ -52,7 +44,7 @@ Stubr documentation is [available in hexdocs](https://hexdocs.pm/stubr/Stubr.htm
 
 ### Random numbers
 
-It is easy to use `Stubr.stub!` to set up a stub for the `uniform/1` function in the `:rand` module. Note, there is no need to explicitly set the module option, it is just used to make sure the `uniform/1` function exists in the `:rand` module.
+Use `Stubr.stub!` to set up a stub for the `uniform/1` function in the `:rand` module. Note, there is no need to explicitly set the module option, however, it is useful to do so because it makes sure the `uniform/1` function exists in the `:rand` module.
 
 ```elixir
 test "create a stub of the :rand.uniform/1 function" do
@@ -69,7 +61,7 @@ end
 
 ### Timex
 
-As above, we can use `Stubr.stub!` to stub the `Timex.now/0` function in the `Timex` module. However, we also want the stub to defer to the original functionality of the `Timex.before?/2` function. To do this, we just set the `module` option to `Timex` and the `auto_stub` option to `true`.
+As above, use `Stubr.stub!` to stub the `Timex.now/0` function in the `Timex` module. However, we also want the stub to act as a transparent proxy over the `Timex` module for all non-stubbed functions. To do this, we just set the `module` option to `Timex` and the `auto_stub` option to `true`.
 
 ```elixir
 test "create a stub of Timex.now/0 and defer on all other functions" do
@@ -84,7 +76,7 @@ end
 
 ### HTTPoison
 
-In this example, we create stubs of the functions `get` and `post` in the `HTTPoison` module that return different values dependant on their inputs:
+In this example, we create stubs of the functions `get` and `post` in the `HTTPoison` module and make them return different values based on their inputs:
 
 ```elixir
 setup_all do
@@ -115,6 +107,6 @@ end
 
 ## Links
 
-Here is a good guide to TDD in functional languages using stubs: [https://www.infoq.com/presentations/mock-fsharp-tdd](https://www.infoq.com/presentations/mock-fsharp-tdd)
+TDD in functional languages using stubs: [https://www.infoq.com/presentations/mock-fsharp-tdd](https://www.infoq.com/presentations/mock-fsharp-tdd)
 
-Mark Seemann's [blog post](http://blog.ploeh.dk/2013/10/23/mocks-for-commands-stubs-for-queries/) talks about the difference between Mocks and Stubs in the context of commands and queries.
+Mark Seemann's [blog post](http://blog.ploeh.dk/2013/10/23/mocks-for-commands-stubs-for-queries/) about the difference between Mocks and Stubs in the context of commands and queries.
